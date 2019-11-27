@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strings"
 )
 
 func Marshal(v interface{}) ([]byte, error) {
@@ -18,15 +17,10 @@ func Marshal(v interface{}) ([]byte, error) {
 		rType = rType.Elem()
 	}
 	for i := 0; i < rType.NumField(); i++ {
-		field := rType.Field(i)
-		tag := field.Tag.Get("jsonapi")
-		tagParts := strings.Split(tag, ",")
-
-		memberType, err := NewMemberType(tagParts[0])
+		memberType, memberName, err := getMember(rType.Field(i))
 		if err != nil {
 			return nil, err
 		}
-		memberName := tagParts[1]
 		resourceValue := reflect.ValueOf(v).Elem().Field(i)
 		resourceKind := resourceValue.Kind()
 
