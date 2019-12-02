@@ -51,29 +51,29 @@ type SampleNested struct {
 	NestedString string `jsonapi:"attribute,nested_string"`
 }
 
-// func TestUnmarshalStruct(t *testing.T) {
-// 	s := Sample{}
-// 	input := []byte(`{
-// 		"data": {
-// 			"id": "someID",
-// 			"type": "samples",
-// 			"attributes": {
-// 				"nested": {
-// 					"nested_string": "hello world!"
-// 				}
-// 			}
-// 		}
-// 	}`)
-// 	if err := Unmarshal(input, &s); err != nil {
-// 		t.Errorf(err.Error())
-// 	}
-// 	if s.ID != "someID" {
-// 		t.Errorf("ID was incorrect, got: %v, want: %v.", s.ID, "someID")
-// 	}
-// 	if s.Nested.NestedString != "hello world!" {
-// 		t.Errorf("Nested.NestedString was incorrect, got: %v, want: %v.", s.Nested.NestedString, "hello world!")
-// 	}
-// }
+func TestUnmarshalNestedStruct(t *testing.T) {
+	s := Sample{}
+	input := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "samples",
+			"attributes": {
+				"nested": {
+					"nested_string": "hello world!"
+				}
+			}
+		}
+	}`)
+	if err := Unmarshal(input, &s); err != nil {
+		t.Errorf(err.Error())
+	}
+	if s.ID != "someID" {
+		t.Errorf("ID was incorrect, got: %v, want: %v.", s.ID, "someID")
+	}
+	if s.Nested.NestedString != "hello world!" {
+		t.Errorf("Nested.NestedString was incorrect, got: %v, want: %v.", s.Nested.NestedString, "hello world!")
+	}
+}
 
 func TestUnmarshalEmbeddedStruct(t *testing.T) {
 	input := []byte(`{

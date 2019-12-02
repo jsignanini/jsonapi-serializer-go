@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func iterateStruct(document *Document, iface interface{}) error {
+func iterateStruct(document *Document, iface interface{}, memberNames ...string) error {
 	// TODO check iface is a struct
 	fields := reflect.TypeOf(iface)
 	values := reflect.ValueOf(iface)
@@ -36,6 +36,7 @@ func iterateStruct(document *Document, iface interface{}) error {
 			continue
 		}
 
+		// TODO this sets ID for all nexted primary tag fields
 		if memberType == MemberTypePrimary {
 			if fieldKind != reflect.String {
 				return fmt.Errorf("ID must be a string")
@@ -44,24 +45,45 @@ func iterateStruct(document *Document, iface interface{}) error {
 			continue
 		}
 
-		var search map[string]interface{}
-		switch memberType {
-		case MemberTypeAttribute:
-			search = document.Data.Attributes
-		case MemberTypeMeta:
-			search = document.Data.Meta
-		}
-
-		// skip if member missing from JSON
-		if _, ok := search[memberName]; !ok {
+		// handle nested structs
+		if fieldKind == reflect.Struct {
+			iterateStruct(document, value.Addr().Interface(), append(memberNames, memberName)...)
 			continue
 		}
 
-		if err := unmarshal(search[memberName], &value); err != nil {
+		// get raw value
+		v, err := getValueForMember(document, memberType, append(memberNames, memberName)...)
+		if err != nil {
+			continue
+		}
+
+		// set raw value
+		if err := unmarshal(v, &value); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func getValueForMember(document *Document, memberType MemberType, memberNames ...string) (interface{}, error) {
+	var search map[string]interface{}
+	switch memberType {
+	case MemberTypeAttribute:
+		search = document.Data.Attributes
+	case MemberTypeMeta:
+		search = document.Data.Meta
+	}
+	for i, name := range memberNames {
+		value, ok := search[name]
+		if !ok {
+			return "", fmt.Errorf("not ok")
+		}
+		if i == len(memberNames)-1 {
+			return value, nil
+		}
+		search = search[name].(map[string]interface{})
+	}
+	return "", fmt.Errorf("memberNames was empty")
 }
 
 func Unmarshal(data []byte, v interface{}) error {
