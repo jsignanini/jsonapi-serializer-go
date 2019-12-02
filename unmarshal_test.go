@@ -6,32 +6,40 @@ import (
 	"testing"
 )
 
-// TODO
 func TestUnmarshalEmbeddedStruct(t *testing.T) {
-	// 	type Embedded struct {
-	// 		ID  string `jsonapi:"primary,examples"`
-	// 		Foo string `jsonapi:"attribute,foo"`
-	// 	}
-	// 	type ExampleWithEmbedded struct {
-	// 		ID       string `jsonapi:"primary,examples"`
-	// 		Bar      string `jsonapi:"attribute,bar"`
-	// 		Embedded `jsonapi:"embedded,test"`
-	// 	}
-	// 	input := []byte(`{
-	// 	"data": {
-	// 		"id": "someID",
-	// 		"type": "examples",
-	// 		"attributes": {
-	// 			"foo": "hello",
-	// 			"bar": "world!"
-	// 		}
-	// 	}
-	// }`)
-	// 	e := ExampleWithEmbedded{}
-	// 	if err := Unmarshal(input, &e); err != nil {
-	// 		t.Errorf(err.Error())
-	// 	}
-	// 	fmt.Printf("%+v\n", e)
+	type Embedded struct {
+		ID  string `jsonapi:"primary,examples"`
+		Foo string `jsonapi:"attribute,foo"`
+	}
+	type ExampleWithEmbedded struct {
+		ID  string `jsonapi:"primary,examples"`
+		Bar string `jsonapi:"attribute,bar"`
+		Embedded
+	}
+	input := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "examples",
+			"attributes": {
+				"foo": "hello",
+				"bar": "world!"
+			}
+		}
+	}`)
+	e := ExampleWithEmbedded{}
+	if err := Unmarshal(input, &e); err != nil {
+		t.Errorf(err.Error())
+	}
+
+	if e.ID != "someID" {
+		t.Errorf("ID was incorrect, got: %v, want: %v.", e.ID, "someID")
+	}
+	if e.Bar != "world!" {
+		t.Errorf("Bar was incorrect, got: %v, want: %v.", e.Bar, "world!")
+	}
+	if e.Foo != "hello" {
+		t.Errorf("Foo was incorrect, got: %v, want: %v.", e.Foo, "hello")
+	}
 }
 
 func TestUnmarshalCustomType(t *testing.T) {

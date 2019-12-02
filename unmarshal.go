@@ -7,29 +7,40 @@ import (
 	"strings"
 )
 
-func Unmarshal(data []byte, v interface{}) error {
-	document := Document{}
-	if err := json.Unmarshal(data, &document); err != nil {
-		return err
+func iterateStruct(document *Document, iface interface{}) error {
+	// TODO check iface is a struct
+	fields := reflect.TypeOf(iface)
+	values := reflect.ValueOf(iface)
+
+	var numField int
+	if fields.Kind() == reflect.Ptr {
+		numField = values.Elem().NumField()
+	} else {
+		numField = values.NumField()
 	}
 
-	rType := reflect.TypeOf(v)
-	if rType.Kind() == reflect.Ptr {
-		rType = rType.Elem()
-	}
-	for i := 0; i < rType.NumField(); i++ {
-		memberType, memberName, err := getMember(rType.Field(i))
-		if err != nil {
-			return err
+	for i := 0; i < numField; i++ {
+		field := fields.Elem().Field(i)
+		value := values.Elem().Field(i)
+		fieldKind := value.Kind()
+
+		// if struct and embedded (anonymus), restart loop
+		if fieldKind == reflect.Struct && field.Anonymous {
+			iterateStruct(document, value.Addr().Interface())
+			continue
 		}
-		resourceValue := reflect.ValueOf(v).Elem().Field(i)
-		resourceKind := resourceValue.Kind()
+
+		// get member info, continue otherwise
+		memberType, memberName, err := getMember(field)
+		if err != nil {
+			continue
+		}
 
 		if memberType == MemberTypePrimary {
-			if resourceKind != reflect.String {
+			if fieldKind != reflect.String {
 				return fmt.Errorf("ID must be a string")
 			}
-			resourceValue.SetString(document.Data.ID)
+			value.SetString(document.Data.ID)
 			continue
 		}
 
@@ -46,9 +57,21 @@ func Unmarshal(data []byte, v interface{}) error {
 			continue
 		}
 
-		if err := unmarshal(search[memberName], &resourceValue); err != nil {
+		if err := unmarshal(search[memberName], &value); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func Unmarshal(data []byte, v interface{}) error {
+	document := Document{}
+	if err := json.Unmarshal(data, &document); err != nil {
+		return err
+	}
+
+	if err := iterateStruct(&document, v); err != nil {
+		return err
 	}
 
 	return nil
@@ -94,9 +117,17 @@ func unmarshal(v interface{}, rv *reflect.Value) error {
 }
 
 func getMember(field reflect.StructField) (MemberType, string, error) {
-	tag := field.Tag.Get(tagKey)
-	// TODO error check tagParts length?
+	tag, ok := field.Tag.Lookup(tagKey)
+	if !ok {
+		return "", "", fmt.Errorf("tag: %s, not specified", tagKey)
+	}
+	if tag == "" {
+		return "", "", fmt.Errorf("tag: %s, was empty", tagKey)
+	}
 	tagParts := strings.Split(tag, ",")
+	if len(tagParts) != 2 {
+		return "", "", fmt.Errorf("tag: %s, was not formatted properly", tagKey)
+	}
 	memberType, err := NewMemberType(tagParts[0])
 	if err != nil {
 		return "", "", err
