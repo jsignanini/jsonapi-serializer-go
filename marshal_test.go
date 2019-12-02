@@ -6,42 +6,33 @@ import (
 )
 
 func TestMarshal(t *testing.T) {
-	type Example struct {
-		ID string `jsonapi:"primary,examples"`
-
-		FooInt     int     `jsonapi:"attribute,foo_int"`
-		FooFloat64 float64 `jsonapi:"attribute,foo_float"`
-		FooString  string  `jsonapi:"attribute,foo_string"`
-
-		FooMeta string `jsonapi:"meta,foo"`
-	}
-	e := Example{
+	s := Sample{
 		ID:         "someID",
-		FooInt:     99,
-		FooFloat64: 3.14159265359,
-		FooString:  "someString",
-		FooMeta:    "bar",
+		Int:        99,
+		Float64:    3.14159265359,
+		String:     "someString",
+		MetaString: "bar",
 	}
-
 	input := []byte(`{
 	"data": {
 		"id": "someID",
-		"type": "examples",
+		"type": "samples",
 		"attributes": {
-			"foo_float": 3.14159265359,
-			"foo_int": 99,
-			"foo_string": "someString"
+			"float64": 3.14159265359,
+			"int": 99,
+			"string": "someString"
 		},
 		"meta": {
-			"foo": "bar"
+			"float64": 0,
+			"int": 0,
+			"string": "bar"
 		}
 	},
 	"jsonapi": {
 		"version": "1.0"
 	}
 }`)
-
-	b, err := Marshal(&e)
+	b, err := Marshal(&s)
 	if err != nil {
 		t.Errorf(err.Error())
 	}

@@ -17,10 +17,12 @@ func Marshal(v interface{}) ([]byte, error) {
 		rType = rType.Elem()
 	}
 	for i := 0; i < rType.NumField(); i++ {
+		// get member info, continue otherwise
 		memberType, memberName, err := getMember(rType.Field(i))
 		if err != nil {
-			return nil, err
+			continue
 		}
+
 		resourceValue := reflect.ValueOf(v).Elem().Field(i)
 		resourceKind := resourceValue.Kind()
 
