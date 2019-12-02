@@ -11,3 +11,4 @@
 - support embedded structs
 - support nested structs
 - support custom types with custom un/marshallers
+- jsonapi spec validation
