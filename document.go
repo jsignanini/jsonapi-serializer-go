@@ -8,3 +8,15 @@ type Document struct {
 	// Links
 	// Included
 }
+
+func NewDocument() *Document {
+	return &Document{
+		JSONAPI: JSONAPI{
+			Version: "1.0",
+		},
+		Data: Resource{
+			Attributes: Attributes{},
+			Meta:       Meta{},
+		},
+	}
+}

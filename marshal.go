@@ -7,17 +7,8 @@ import (
 )
 
 func Marshal(v interface{}) ([]byte, error) {
-	document := Document{
-		JSONAPI: JSONAPI{
-			Version: "1.0",
-		},
-		Data: Resource{
-			Attributes: Attributes{},
-			Meta:       Meta{},
-		},
-	}
-
-	if err := iterateStruct(&document, v, func(field reflect.StructField, value reflect.Value, memberNames ...string) error {
+	document := NewDocument()
+	if err := iterateStruct(document, v, func(field reflect.StructField, value reflect.Value, memberNames ...string) error {
 		// get member info, continue otherwise
 		memberType, memberName, err := getMember(field)
 		if err != nil {
