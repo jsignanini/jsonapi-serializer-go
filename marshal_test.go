@@ -18,8 +18,10 @@ func TestMarshal(t *testing.T) {
 		"id": "someID",
 		"type": "samples",
 		"attributes": {
+			"embedded_string": "",
 			"float64": 3.14159265359,
 			"int": 99,
+			"nested_string": "",
 			"string": "someString"
 		},
 		"meta": {

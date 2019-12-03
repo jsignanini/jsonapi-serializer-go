@@ -7,7 +7,9 @@ import (
 	"strings"
 )
 
-func iterateStruct(document *Document, iface interface{}, memberNames ...string) error {
+type iterFunc func(reflect.StructField, reflect.Value, ...string) error
+
+func iterateStruct(document *Document, iface interface{}, iter iterFunc, memberNames ...string) error {
 	// TODO check iface is a struct
 	fields := reflect.TypeOf(iface)
 	values := reflect.ValueOf(iface)
@@ -22,43 +24,27 @@ func iterateStruct(document *Document, iface interface{}, memberNames ...string)
 	for i := 0; i < numField; i++ {
 		field := fields.Elem().Field(i)
 		value := values.Elem().Field(i)
-		fieldKind := value.Kind()
+		kind := value.Kind()
 
 		// if struct and embedded (anonymus), restart loop
-		if fieldKind == reflect.Struct && field.Anonymous {
-			iterateStruct(document, value.Addr().Interface())
+		if kind == reflect.Struct && field.Anonymous {
+			iterateStruct(document, value.Addr().Interface(), iter, memberNames...)
 			continue
 		}
 
 		// get member info, continue otherwise
-		memberType, memberName, err := getMember(field)
+		_, memberName, err := getMember(field)
 		if err != nil {
-			continue
-		}
-
-		// TODO this sets ID for all nexted primary tag fields
-		if memberType == MemberTypePrimary {
-			if fieldKind != reflect.String {
-				return fmt.Errorf("ID must be a string")
-			}
-			value.SetString(document.Data.ID)
 			continue
 		}
 
 		// handle nested structs
-		if fieldKind == reflect.Struct {
-			iterateStruct(document, value.Addr().Interface(), append(memberNames, memberName)...)
+		if kind == reflect.Struct {
+			iterateStruct(document, value.Addr().Interface(), iter, append(memberNames, memberName)...)
 			continue
 		}
 
-		// get raw value
-		v, err := getValueForMember(document, memberType, append(memberNames, memberName)...)
-		if err != nil {
-			continue
-		}
-
-		// set raw value
-		if err := unmarshal(v, &value); err != nil {
+		if err := iter(field, value, append(memberNames, memberName)...); err != nil {
 			return err
 		}
 	}
@@ -92,7 +78,37 @@ func Unmarshal(data []byte, v interface{}) error {
 		return err
 	}
 
-	if err := iterateStruct(&document, v); err != nil {
+	if err := iterateStruct(&document, v, func(field reflect.StructField, value reflect.Value, memberNames ...string) error {
+		fieldKind := value.Kind()
+
+		// get member info, continue otherwise
+		memberType, _, err := getMember(field)
+		if err != nil {
+			return err
+		}
+
+		// TODO this sets ID for all nexted primary tag fields
+		if memberType == MemberTypePrimary {
+			if fieldKind != reflect.String {
+				return fmt.Errorf("ID must be a string")
+			}
+			value.SetString(document.Data.ID)
+			return nil
+		}
+
+		// get raw value
+		v, err := getValueForMember(&document, memberType, memberNames...)
+		if err != nil {
+			return nil
+		}
+
+		// set raw value
+		if err := unmarshal(v, &value); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
 		return err
 	}
 

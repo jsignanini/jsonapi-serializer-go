@@ -7,61 +7,63 @@ import (
 )
 
 func Marshal(v interface{}) ([]byte, error) {
-	data := Resource{
-		Attributes: Attributes{},
-		Meta:       Meta{},
+	document := Document{
+		JSONAPI: JSONAPI{
+			Version: "1.0",
+		},
+		Data: Resource{
+			Attributes: Attributes{},
+			Meta:       Meta{},
+		},
 	}
 
-	rType := reflect.TypeOf(v)
-	if rType.Kind() == reflect.Ptr {
-		rType = rType.Elem()
-	}
-	for i := 0; i < rType.NumField(); i++ {
+	if err := iterateStruct(&document, v, func(field reflect.StructField, value reflect.Value, memberNames ...string) error {
 		// get member info, continue otherwise
-		memberType, memberName, err := getMember(rType.Field(i))
+		memberType, memberName, err := getMember(field)
 		if err != nil {
-			continue
+			return nil
 		}
 
-		resourceValue := reflect.ValueOf(v).Elem().Field(i)
-		resourceKind := resourceValue.Kind()
+		kind := value.Kind()
 
 		if memberType == MemberTypePrimary {
-			if resourceKind != reflect.String {
-				return nil, fmt.Errorf("ID must be a string")
+			if kind != reflect.String {
+				return fmt.Errorf("ID must be a string")
 			}
-			data.ID = resourceValue.Interface().(string)
-			data.Type = memberName
-			continue
+			id, _ := value.Interface().(string)
+			if id == "" {
+				return nil
+			}
+			document.Data.ID = id
+			document.Data.Type = memberName
+			return nil
 		}
 
 		var search map[string]interface{}
 		switch memberType {
 		case MemberTypeAttribute:
-			search = data.Attributes
+			search = document.Data.Attributes
 		case MemberTypeMeta:
-			search = data.Meta
+			search = document.Data.Meta
 		}
 
-		switch resourceValue.Kind() {
+		switch kind {
 		case reflect.String:
-			search[memberName] = resourceValue.Interface().(string)
+			search[memberName] = value.Interface().(string)
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			search[memberName] = resourceValue.Interface().(int)
+			search[memberName] = value.Interface().(int)
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-			search[memberName] = resourceValue.Interface().(uint)
+			search[memberName] = value.Interface().(uint)
 		case reflect.Float32, reflect.Float64:
-			search[memberName] = resourceValue.Interface().(float64)
+			search[memberName] = value.Interface().(float64)
 		default:
 			// TODO
 		}
+
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
-	document := Document{
-		JSONAPI: JSONAPI{
-			Version: "1.0",
-		},
-		Data: data,
-	}
 	return json.MarshalIndent(&document, "", "\t")
 }
