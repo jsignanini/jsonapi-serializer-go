@@ -12,3 +12,4 @@
 - support nested structs
 - support custom types with custom un/marshallers
 - jsonapi spec validation
+- jsonapi settings (e.g.: spec version, error/warning on document validation, etc.)
