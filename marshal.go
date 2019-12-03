@@ -58,8 +58,14 @@ func marshal(document *Document, memberType MemberType, memberNames []string, va
 		search = search[name].(map[string]interface{})
 	}
 
+	if value.Kind() == reflect.Ptr {
+		value = value.Elem()
+	}
+
 	// set value
 	switch value.Kind() {
+	case reflect.Bool:
+		search[memberName] = value.Interface().(bool)
 	case reflect.String:
 		search[memberName] = value.Interface().(string)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
