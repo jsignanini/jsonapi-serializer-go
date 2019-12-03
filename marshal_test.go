@@ -21,7 +21,9 @@ func TestMarshal(t *testing.T) {
 			"embedded_string": "",
 			"float64": 3.14159265359,
 			"int": 99,
-			"nested_string": "",
+			"nested": {
+				"nested_string": ""
+			},
 			"string": "someString"
 		},
 		"meta": {

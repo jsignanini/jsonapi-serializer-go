@@ -2,7 +2,7 @@ package jsonapi
 
 import "reflect"
 
-type iterFunc func(reflect.StructField, reflect.Value, ...string) error
+type iterFunc func(reflect.Value, MemberType, ...string) error
 
 func iterateStruct(document *Document, iface interface{}, iter iterFunc, memberNames ...string) error {
 	// TODO check iface is a struct
@@ -28,7 +28,7 @@ func iterateStruct(document *Document, iface interface{}, iter iterFunc, memberN
 		}
 
 		// get member info, continue otherwise
-		_, memberName, err := getMember(field)
+		memberType, memberName, err := getMember(field)
 		if err != nil {
 			continue
 		}
@@ -39,7 +39,7 @@ func iterateStruct(document *Document, iface interface{}, iter iterFunc, memberN
 			continue
 		}
 
-		if err := iter(field, value, append(memberNames, memberName)...); err != nil {
+		if err := iter(value, memberType, append(memberNames, memberName)...); err != nil {
 			return err
 		}
 	}

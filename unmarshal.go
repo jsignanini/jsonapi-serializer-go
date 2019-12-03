@@ -34,15 +34,8 @@ func Unmarshal(data []byte, v interface{}) error {
 		return err
 	}
 
-	if err := iterateStruct(document, v, func(field reflect.StructField, value reflect.Value, memberNames ...string) error {
+	if err := iterateStruct(document, v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
 		fieldKind := value.Kind()
-
-		// get member info, continue otherwise
-		memberType, _, err := getMember(field)
-		if err != nil {
-			return err
-		}
-
 		// TODO this sets ID for all nexted primary tag fields
 		if memberType == MemberTypePrimary {
 			if fieldKind != reflect.String {

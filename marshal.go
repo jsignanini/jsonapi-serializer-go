@@ -8,13 +8,7 @@ import (
 
 func Marshal(v interface{}) ([]byte, error) {
 	document := NewDocument()
-	if err := iterateStruct(document, v, func(field reflect.StructField, value reflect.Value, memberNames ...string) error {
-		// get member info, continue otherwise
-		memberType, memberName, err := getMember(field)
-		if err != nil {
-			return nil
-		}
-
+	if err := iterateStruct(document, v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
 		kind := value.Kind()
 
 		if memberType == MemberTypePrimary {
@@ -26,30 +20,11 @@ func Marshal(v interface{}) ([]byte, error) {
 				return nil
 			}
 			document.Data.ID = id
-			document.Data.Type = memberName
+			document.Data.Type = memberNames[0]
 			return nil
 		}
 
-		var search map[string]interface{}
-		switch memberType {
-		case MemberTypeAttribute:
-			search = document.Data.Attributes
-		case MemberTypeMeta:
-			search = document.Data.Meta
-		}
-
-		switch kind {
-		case reflect.String:
-			search[memberName] = value.Interface().(string)
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			search[memberName] = value.Interface().(int)
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-			search[memberName] = value.Interface().(uint)
-		case reflect.Float32, reflect.Float64:
-			search[memberName] = value.Interface().(float64)
-		default:
-			// TODO
-		}
+		marshal(document, memberType, memberNames, value)
 
 		return nil
 	}); err != nil {
@@ -57,4 +32,49 @@ func Marshal(v interface{}) ([]byte, error) {
 	}
 
 	return json.MarshalIndent(&document, "", "\t")
+}
+
+// document *Document, memberType MemberType, memberNames ...string
+func marshal(document *Document, memberType MemberType, memberNames []string, value reflect.Value) {
+	// figure out search
+	var search map[string]interface{}
+	switch memberType {
+	case MemberTypeAttribute:
+		search = document.Data.Attributes
+	case MemberTypeMeta:
+		search = document.Data.Meta
+	}
+
+	// iterate memberNames
+	var memberName string
+	for i, name := range memberNames {
+		memberName = name
+		if i == len(memberNames)-1 {
+			break
+		}
+		if _, ok := search[name]; !ok {
+			search[name] = make(map[string]interface{})
+		}
+		search = search[name].(map[string]interface{})
+	}
+
+	// set value
+	switch value.Kind() {
+	case reflect.String:
+		search[memberName] = value.Interface().(string)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		search[memberName] = value.Interface().(int)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		search[memberName] = value.Interface().(uint)
+	case reflect.Float32, reflect.Float64:
+		search[memberName] = value.Interface().(float64)
+	default:
+		// TODO
+		// cu, ok := customUnmarshalers[rv.Type()]
+		// if !ok {
+		// 	return fmt.Errorf("Type not supported, must implement custom unmarshaller")
+		// }
+		// cu(v, rv)
+	}
+	// return nil
 }
