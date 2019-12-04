@@ -45,14 +45,8 @@ func Unmarshal(data []byte, v interface{}) error {
 			return nil
 		}
 
-		// get raw value
-		v, err := getValueForMember(document, memberType, memberNames...)
-		if err != nil {
-			return nil
-		}
-
 		// set raw value
-		if err := unmarshal(v, &value); err != nil {
+		if err := unmarshal(document, memberType, memberNames, value); err != nil {
 			return err
 		}
 
@@ -68,39 +62,97 @@ func RegisterUnmarshaler(t reflect.Type, u unmarshalerFunc) {
 	customUnmarshalers[t] = u
 }
 
-type unmarshalerFunc = func(interface{}, *reflect.Value)
+type unmarshalerFunc = func(interface{}, reflect.Value)
 
 var customUnmarshalers = make(map[reflect.Type]unmarshalerFunc)
 
-func unmarshal(v interface{}, rv *reflect.Value) error {
-	switch rv.Kind() {
+func unmarshal(document *Document, memberType MemberType, memberNames []string, value reflect.Value) error {
+	// find raw value if exists
+	var search map[string]interface{}
+	switch memberType {
+	case MemberTypeAttribute:
+		search = document.Data.Attributes
+	case MemberTypeMeta:
+		search = document.Data.Meta
+	}
+	rawValue, found := deepSearch(search, memberNames...)
+	if !found {
+		return nil
+	}
+
+	// if pointer, get non-pointer kind
+	isPtr := false
+	kind := value.Kind()
+	if kind == reflect.Ptr {
+		isPtr = true
+		kind = reflect.New(value.Type().Elem()).Elem().Kind()
+	}
+
+	// set values by kind
+	switch kind {
+	case reflect.Bool:
+		if val, ok := rawValue.(bool); ok {
+			if isPtr {
+				value.Set(reflect.ValueOf(&val))
+			} else {
+				value.SetBool(val)
+			}
+		}
 	case reflect.String:
-		if val, ok := v.(string); ok {
-			rv.SetString(val)
+		if val, ok := rawValue.(string); ok {
+			if isPtr {
+				value.Set(reflect.ValueOf(&val))
+			} else {
+				value.SetString(val)
+			}
 		}
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		if val, ok := v.(float64); ok {
+		if val, ok := rawValue.(float64); ok {
 			// TODO resourceValue.OverflowInt(val)
-			rv.SetInt(int64(val))
+			if isPtr {
+				value.Set(reflect.ValueOf(&val))
+			} else {
+				value.SetInt(int64(val))
+			}
 		}
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		if val, ok := v.(float64); ok {
+		if val, ok := rawValue.(float64); ok {
 			// TODO resourceValue.OverflowInt(val)
-			rv.SetUint(uint64(val))
+			if isPtr {
+				value.Set(reflect.ValueOf(&val))
+			} else {
+				value.SetUint(uint64(val))
+			}
 		}
 	case reflect.Float32, reflect.Float64:
-		if val, ok := v.(float64); ok {
+		if val, ok := rawValue.(float64); ok {
 			// TODO resourceValue.OverflowInt(val)
-			rv.SetFloat(val)
+			if isPtr {
+				value.Set(reflect.ValueOf(&val))
+			} else {
+				value.SetFloat(val)
+			}
 		}
 	default:
-		cu, ok := customUnmarshalers[rv.Type()]
+		cu, ok := customUnmarshalers[value.Type()]
 		if !ok {
-			return fmt.Errorf("Type not supported, must implement custom unmarshaller")
+			return fmt.Errorf("Type: %+v, not supported, must implement custom unmarshaller", value.Type())
 		}
-		cu(v, rv)
+		cu(rawValue, value)
 	}
 	return nil
+}
+
+func deepSearch(tree map[string]interface{}, keys ...string) (interface{}, bool) {
+	key, keys := keys[0], keys[1:]
+	value, ok := tree[key]
+	if !ok {
+		return nil, false
+	}
+	if len(keys) == 0 {
+		return value, true
+	}
+	return deepSearch(tree[key].(map[string]interface{}), keys...)
 }
 
 func getMember(field reflect.StructField) (MemberType, string, error) {

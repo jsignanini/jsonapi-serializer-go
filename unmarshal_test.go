@@ -51,6 +51,102 @@ type SampleNested struct {
 	NestedString string `jsonapi:"attribute,nested_string"`
 }
 
+func TestUnmarshalBool(t *testing.T) {
+	type TestBool struct {
+		ID     string `jsonapi:"primary,test_bools"`
+		IsTrue bool   `jsonapi:"attribute,is_true"`
+	}
+
+	expectedTrue := TestBool{}
+	inputTrue := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "test_bools",
+			"attributes": {
+				"is_true": true
+			}
+		}
+	}`)
+	if err := Unmarshal(inputTrue, &expectedTrue); err != nil {
+		t.Errorf(err.Error())
+	}
+	if !expectedTrue.IsTrue {
+		t.Errorf("IsTrue was incorrect, got: %t, want: %t.", expectedTrue.IsTrue, true)
+	}
+
+	expectedFalse := TestBool{}
+	inputFalse := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "test_bools",
+			"attributes": {
+				"is_true": true
+			}
+		}
+	}`)
+	if err := Unmarshal(inputFalse, &expectedFalse); err != nil {
+		t.Errorf(err.Error())
+	}
+	if !expectedFalse.IsTrue {
+		t.Errorf("IsTrue was incorrect, got: %t, want: %t.", expectedFalse.IsTrue, false)
+	}
+}
+
+func TestUnmarshalBoolPtr(t *testing.T) {
+	type TestBoolPtr struct {
+		ID     string `jsonapi:"primary,test_bools"`
+		IsTrue *bool  `jsonapi:"attribute,is_true"`
+	}
+
+	expectedTrue := TestBoolPtr{}
+	inputTrue := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "test_bools",
+			"attributes": {
+				"is_true": true
+			}
+		}
+	}`)
+	if err := Unmarshal(inputTrue, &expectedTrue); err != nil {
+		t.Errorf(err.Error())
+	}
+	if expectedTrue.IsTrue == nil || !*expectedTrue.IsTrue {
+		t.Errorf("IsTrue was incorrect, got: %v, want: %t.", expectedTrue.IsTrue, true)
+	}
+
+	expectedFalse := TestBoolPtr{}
+	inputFalse := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "test_bools",
+			"attributes": {
+				"is_true": false
+			}
+		}
+	}`)
+	if err := Unmarshal(inputFalse, &expectedFalse); err != nil {
+		t.Errorf(err.Error())
+	}
+	if expectedFalse.IsTrue == nil || *expectedFalse.IsTrue {
+		t.Errorf("IsTrue was incorrect, got: %v, want: %t.", expectedFalse.IsTrue, false)
+	}
+
+	expectedNil := TestBoolPtr{}
+	inputNil := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "test_bools"
+		}
+	}`)
+	if err := Unmarshal(inputNil, &expectedNil); err != nil {
+		t.Errorf(err.Error())
+	}
+	if expectedNil.IsTrue != nil {
+		t.Errorf("IsTrue was incorrect, got: %v, want: %v.", expectedNil.IsTrue, nil)
+	}
+}
+
 func TestUnmarshalNestedStruct(t *testing.T) {
 	s := Sample{}
 	input := []byte(`{
@@ -103,7 +199,7 @@ func TestUnmarshalCustomType(t *testing.T) {
 }
 
 func TestUnmarshalCustomTypePtr(t *testing.T) {
-	RegisterUnmarshaler(reflect.TypeOf(&CustomNullableString{}), func(v interface{}, rv *reflect.Value) {
+	RegisterUnmarshaler(reflect.TypeOf(&CustomNullableString{}), func(v interface{}, rv reflect.Value) {
 		ns := &CustomNullableString{}
 		if v != nil {
 			ns.Valid = true

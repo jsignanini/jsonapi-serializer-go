@@ -34,7 +34,6 @@ func Marshal(v interface{}) ([]byte, error) {
 	return json.MarshalIndent(&document, "", "\t")
 }
 
-// document *Document, memberType MemberType, memberNames ...string
 func marshal(document *Document, memberType MemberType, memberNames []string, value reflect.Value) {
 	// figure out search
 	var search map[string]interface{}
