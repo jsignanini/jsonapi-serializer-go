@@ -4,7 +4,7 @@ import "reflect"
 
 type iterFunc func(reflect.Value, MemberType, ...string) error
 
-func iterateStruct(document *Document, iface interface{}, iter iterFunc, memberNames ...string) error {
+func iterateStruct(iface interface{}, iter iterFunc, memberNames ...string) error {
 	// TODO check iface is a struct
 	fields := reflect.TypeOf(iface)
 	values := reflect.ValueOf(iface)
@@ -23,7 +23,7 @@ func iterateStruct(document *Document, iface interface{}, iter iterFunc, memberN
 
 		// if struct and embedded (anonymus), restart loop
 		if kind == reflect.Struct && field.Anonymous {
-			iterateStruct(document, value.Addr().Interface(), iter, memberNames...)
+			iterateStruct(value.Addr().Interface(), iter, memberNames...)
 			continue
 		}
 
@@ -35,7 +35,7 @@ func iterateStruct(document *Document, iface interface{}, iter iterFunc, memberN
 
 		// handle nested structs
 		if kind == reflect.Struct {
-			iterateStruct(document, value.Addr().Interface(), iter, append(memberNames, memberName)...)
+			iterateStruct(value.Addr().Interface(), iter, append(memberNames, memberName)...)
 			continue
 		}
 

@@ -8,7 +8,7 @@ import (
 
 func Marshal(v interface{}) ([]byte, error) {
 	document := NewDocument()
-	if err := iterateStruct(document, v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
+	if err := iterateStruct(v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
 		kind := value.Kind()
 
 		if memberType == MemberTypePrimary {

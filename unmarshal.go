@@ -29,30 +29,73 @@ func getValueForMember(document *Document, memberType MemberType, memberNames ..
 }
 
 func Unmarshal(data []byte, v interface{}) error {
-	document := NewDocument()
-	if err := json.Unmarshal(data, document); err != nil {
-		return err
+	kind := reflect.TypeOf(v).Kind()
+	if kind != reflect.Ptr && kind != reflect.Slice {
+		return fmt.Errorf("v should be pointer or slice")
 	}
 
-	if err := iterateStruct(document, v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
-		fieldKind := value.Kind()
-		// TODO this sets ID for all nexted primary tag fields
-		if memberType == MemberTypePrimary {
-			if fieldKind != reflect.String {
-				return fmt.Errorf("ID must be a string")
-			}
-			value.SetString(document.Data.ID)
-			return nil
-		}
+	isSlice := false
+	if reflect.TypeOf(v).Elem().Kind() == reflect.Slice {
+		isSlice = true
+	}
 
-		// set raw value
-		if err := unmarshal(document, memberType, memberNames, value); err != nil {
+	if !isSlice {
+		document := NewDocument()
+		if err := json.Unmarshal(data, document); err != nil {
 			return err
 		}
 
-		return nil
-	}); err != nil {
-		return err
+		if err := iterateStruct(v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
+			fieldKind := value.Kind()
+			// TODO this sets ID for all nexted primary tag fields
+			if memberType == MemberTypePrimary {
+				if fieldKind != reflect.String {
+					return fmt.Errorf("ID must be a string")
+				}
+				value.SetString(document.Data.ID)
+				return nil
+			}
+
+			// set raw value
+			if err := unmarshal(document.Data, memberType, memberNames, value); err != nil {
+				return err
+			}
+
+			return nil
+		}); err != nil {
+			return err
+		}
+	} else {
+		document := NewCompoundDocument()
+		if err := json.Unmarshal(data, document); err != nil {
+			return err
+		}
+
+		for _, resource := range document.Data {
+			v2 := reflect.New(reflect.ValueOf(v).Elem().Type().Elem()).Interface()
+			if err := iterateStruct(v2, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
+				fieldKind := value.Kind()
+				// TODO this sets ID for all nexted primary tag fields
+				if memberType == MemberTypePrimary {
+					if fieldKind != reflect.String {
+						return fmt.Errorf("ID must be a string")
+					}
+					value.SetString(resource.ID)
+					return nil
+				}
+
+				// set raw value
+				if err := unmarshal(resource, memberType, memberNames, value); err != nil {
+					return err
+				}
+
+				return nil
+			}); err != nil {
+				return err
+			}
+			value := reflect.ValueOf(v).Elem()
+			value.Set(reflect.Append(value, reflect.ValueOf(v2).Elem()))
+		}
 	}
 
 	return nil
@@ -66,14 +109,14 @@ type unmarshalerFunc = func(interface{}, reflect.Value)
 
 var customUnmarshalers = make(map[reflect.Type]unmarshalerFunc)
 
-func unmarshal(document *Document, memberType MemberType, memberNames []string, value reflect.Value) error {
+func unmarshal(resource *Resource, memberType MemberType, memberNames []string, value reflect.Value) error {
 	// find raw value if exists
 	var search map[string]interface{}
 	switch memberType {
 	case MemberTypeAttribute:
-		search = document.Data.Attributes
+		search = resource.Attributes
 	case MemberTypeMeta:
-		search = document.Data.Meta
+		search = resource.Meta
 	}
 	rawValue, found := deepSearch(search, memberNames...)
 	if !found {

@@ -496,3 +496,91 @@ func TestUnmarshal(t *testing.T) {
 		t.Errorf("MetaFloat64 was incorrect, got: %f, want: %f.", s.MetaFloat64, 99.2486135148)
 	}
 }
+
+func TestUnmarshalMany(t *testing.T) {
+	input := []byte(`{
+	"data": [
+		{
+			"id": "someID",
+			"type": "samples",
+			"attributes": {
+				"float64": 3.14159265359,
+				"int": 99,
+				"string": "someString"
+			},
+			"meta": {
+				"float64": 99.2486135148,
+				"int": 5845,
+				"string": "someString"
+			}
+		},
+		{
+			"id": "someOtherID",
+			"type": "samples",
+			"attributes": {
+				"float64": 9999999.9999,
+				"int": 999999,
+				"string": "99SomeString"
+			},
+			"meta": {
+				"float64": 12121.2321223,
+				"int": 12312313,
+				"string": "someString99"
+			}
+		}
+	],
+	"jsonapi": {
+		"version": "1.0"
+	}
+}`)
+	s := []Sample{}
+	if err := Unmarshal(input, &s); err != nil {
+		t.Errorf(err.Error())
+	}
+
+	if len(s) != 2 {
+		t.Errorf("expected slice of len: %d, got: %d", 2, len(s))
+	}
+	if s[0].ID != "someID" {
+		t.Errorf("ID was incorrect, got: %s, want: %s.", s[0].ID, "someID")
+	}
+	if s[0].Int != 99 {
+		t.Errorf("Int was incorrect, got: %d, want: %d.", s[0].Int, 99)
+	}
+	if s[0].Float64 != 3.14159265359 {
+		t.Errorf("Float64 was incorrect, got: %f, want: %f.", s[0].Float64, 3.14159265359)
+	}
+	if s[0].String != "someString" {
+		t.Errorf("String was incorrect, got: %s, want: %s.", s[0].String, "someString")
+	}
+	if s[0].MetaInt != 5845 {
+		t.Errorf("MetaInt was incorrect, got: %d, want: %d.", s[0].MetaInt, 5845)
+	}
+	if s[0].MetaString != "someString" {
+		t.Errorf("MetaString was incorrect, got: %s, want: %s.", s[0].MetaString, "someString")
+	}
+	if s[0].MetaFloat64 != 99.2486135148 {
+		t.Errorf("MetaFloat64 was incorrect, got: %f, want: %f.", s[0].MetaFloat64, 99.2486135148)
+	}
+	if s[1].ID != "someOtherID" {
+		t.Errorf("ID was incorrect, got: %s, want: %s.", s[1].ID, "someOtherID")
+	}
+	if s[1].Int != 999999 {
+		t.Errorf("Int was incorrect, got: %d, want: %d.", s[1].Int, 999999)
+	}
+	if s[1].Float64 != 9999999.9999 {
+		t.Errorf("Float64 was incorrect, got: %f, want: %f.", s[1].Float64, 9999999.9999)
+	}
+	if s[1].String != "99SomeString" {
+		t.Errorf("String was incorrect, got: %s, want: %s.", s[1].String, "99SomeString")
+	}
+	if s[1].MetaInt != 12312313 {
+		t.Errorf("MetaInt was incorrect, got: %d, want: %d.", s[1].MetaInt, 12312313)
+	}
+	if s[1].MetaString != "someString99" {
+		t.Errorf("MetaString was incorrect, got: %s, want: %s.", s[1].MetaString, "someString99")
+	}
+	if s[1].MetaFloat64 != 12121.2321223 {
+		t.Errorf("MetaFloat64 was incorrect, got: %f, want: %f.", s[1].MetaFloat64, 12121.2321223)
+	}
+}
