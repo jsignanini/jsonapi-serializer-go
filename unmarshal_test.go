@@ -147,6 +147,169 @@ func TestUnmarshalBoolPtr(t *testing.T) {
 	}
 }
 
+func TestUnmarshalInt(t *testing.T) {
+	type TestUnmarshalInt struct {
+		ID  string `jsonapi:"primary,ints"`
+		Foo int    `jsonapi:"attribute,bar"`
+	}
+	valid := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "ints",
+			"attributes": {
+				"bar": 99
+			}
+		}
+	}`)
+	validTest := &TestUnmarshalInt{}
+	if err := Unmarshal(valid, validTest); err != nil {
+		t.Errorf(err.Error())
+	}
+	if validTest.Foo != 99 {
+		t.Errorf("expected int: %d, got: %d", 99, validTest.Foo)
+	}
+	negative := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "ints",
+			"attributes": {
+				"bar": -28894
+			}
+		}
+	}`)
+	negativeTest := &TestUnmarshalInt{}
+	if err := Unmarshal(negative, negativeTest); err != nil {
+		t.Errorf(err.Error())
+	}
+	if negativeTest.Foo != -28894 {
+		t.Errorf("expected int: %d, got: %d", -28894, negativeTest.Foo)
+	}
+}
+
+func TestUnmarshalIntPtr(t *testing.T) {
+	type TestUnmarshalInt struct {
+		ID  string `jsonapi:"primary,ints"`
+		Foo *int   `jsonapi:"attribute,bar"`
+	}
+	valid := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "ints",
+			"attributes": {
+				"bar": 99
+			}
+		}
+	}`)
+	validTest := &TestUnmarshalInt{}
+	if err := Unmarshal(valid, validTest); err != nil {
+		t.Errorf(err.Error())
+	}
+	if *validTest.Foo != 99 {
+		t.Errorf("expected *int: %d, got: %d", 99, *validTest.Foo)
+	}
+	negative := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "ints",
+			"attributes": {
+				"bar": -28894
+			}
+		}
+	}`)
+	negativeTest := &TestUnmarshalInt{}
+	if err := Unmarshal(negative, negativeTest); err != nil {
+		t.Errorf(err.Error())
+	}
+	if *negativeTest.Foo != -28894 {
+		t.Errorf("expected *int: %d, got: %d", -28894, *negativeTest.Foo)
+	}
+	empty := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "ints"
+		}
+	}`)
+	emptyTest := &TestUnmarshalInt{}
+	if err := Unmarshal(empty, emptyTest); err != nil {
+		t.Errorf(err.Error())
+	}
+	if emptyTest.Foo != nil {
+		t.Errorf("expected *int: %v, got: %d", nil, *emptyTest.Foo)
+	}
+}
+
+func TestUnmarshalInt8(t *testing.T) {
+	// TODO
+}
+
+func TestUnmarshalInt8Ptr(t *testing.T) {
+	// TODO
+}
+
+func TestUnmarshalInt16(t *testing.T) {
+	// TODO
+}
+
+func TestUnmarshalInt16Ptr(t *testing.T) {
+	// TODO
+}
+
+func TestUnmarshalInt32(t *testing.T) {
+	// TODO
+}
+
+func TestUnmarshalInt32Ptr(t *testing.T) {
+	// TODO
+}
+
+func TestUnmarshalInt64(t *testing.T) {
+	// TODO
+}
+
+func TestUnmarshalInt64Ptr(t *testing.T) {
+	// TODO
+}
+
+func TestUnmarshalUint(t *testing.T) {
+	// TODO
+}
+
+func TestUnmarshalUintPtr(t *testing.T) {
+	// TODO
+}
+
+func TestUnmarshalUint8(t *testing.T) {
+	// TODO
+}
+
+func TestUnmarshalUint8Ptr(t *testing.T) {
+	// TODO
+}
+
+func TestUnmarshalUint16(t *testing.T) {
+	// TODO
+}
+
+func TestUnmarshalUint16Ptr(t *testing.T) {
+	// TODO
+}
+
+func TestUnmarshalUint32(t *testing.T) {
+	// TODO
+}
+
+func TestUnmarshalUint32Ptr(t *testing.T) {
+	// TODO
+}
+
+func TestUnmarshalUint64(t *testing.T) {
+	// TODO
+}
+
+func TestUnmarshalUint64Ptr(t *testing.T) {
+	// TODO
+}
+
 func TestUnmarshalNestedStruct(t *testing.T) {
 	s := Sample{}
 	input := []byte(`{

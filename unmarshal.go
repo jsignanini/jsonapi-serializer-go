@@ -106,13 +106,54 @@ func unmarshal(document *Document, memberType MemberType, memberNames []string, 
 				value.SetString(val)
 			}
 		}
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+	case reflect.Int:
 		if val, ok := rawValue.(float64); ok {
+			intVal := int(val)
 			// TODO resourceValue.OverflowInt(val)
 			if isPtr {
-				value.Set(reflect.ValueOf(&val))
+				value.Set(reflect.ValueOf(&intVal))
 			} else {
-				value.SetInt(int64(val))
+				value.SetInt(int64(intVal))
+			}
+		}
+	case reflect.Int8:
+		if val, ok := rawValue.(float64); ok {
+			intVal := int8(val)
+			// TODO resourceValue.OverflowInt(val)
+			if isPtr {
+				value.Set(reflect.ValueOf(&intVal))
+			} else {
+				value.SetInt(int64(intVal))
+			}
+		}
+	case reflect.Int16:
+		if val, ok := rawValue.(float64); ok {
+			intVal := int16(val)
+			// TODO resourceValue.OverflowInt(val)
+			if isPtr {
+				value.Set(reflect.ValueOf(&intVal))
+			} else {
+				value.SetInt(int64(intVal))
+			}
+		}
+	case reflect.Int32:
+		if val, ok := rawValue.(float64); ok {
+			intVal := int32(val)
+			// TODO resourceValue.OverflowInt(val)
+			if isPtr {
+				value.Set(reflect.ValueOf(&intVal))
+			} else {
+				value.SetInt(int64(intVal))
+			}
+		}
+	case reflect.Int64:
+		if val, ok := rawValue.(float64); ok {
+			intVal := int64(val)
+			// TODO resourceValue.OverflowInt(val)
+			if isPtr {
+				value.Set(reflect.ValueOf(&intVal))
+			} else {
+				value.SetInt(intVal)
 			}
 		}
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:

@@ -14,3 +14,4 @@
 - jsonapi spec validation
 - jsonapi settings (e.g.: spec version, error/warning on document validation, etc.)
 - support omitempty tag
+- add overflow check and tests for int, uint and float (both value and pointers)
