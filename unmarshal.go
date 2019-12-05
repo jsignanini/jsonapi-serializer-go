@@ -57,11 +57,7 @@ func Unmarshal(data []byte, v interface{}) error {
 			}
 
 			// set raw value
-			if err := unmarshal(document.Data, memberType, memberNames, value); err != nil {
-				return err
-			}
-
-			return nil
+			return unmarshal(document.Data, memberType, memberNames, value)
 		}); err != nil {
 			return err
 		}
@@ -85,11 +81,7 @@ func Unmarshal(data []byte, v interface{}) error {
 				}
 
 				// set raw value
-				if err := unmarshal(resource, memberType, memberNames, value); err != nil {
-					return err
-				}
-
-				return nil
+				return unmarshal(resource, memberType, memberNames, value)
 			}); err != nil {
 				return err
 			}

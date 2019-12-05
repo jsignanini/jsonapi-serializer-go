@@ -2,8 +2,61 @@ package jsonapi
 
 import (
 	"bytes"
+	"reflect"
 	"testing"
 )
+
+func TestMarshal(t *testing.T) {
+	s := Sample{
+		ID:         "someID",
+		Int:        99,
+		Float64:    3.14159265359,
+		String:     "someString",
+		MetaString: "bar",
+	}
+	RegisterMarshaler(reflect.TypeOf(&CustomNullableString{}), func(s map[string]interface{}, memberName string, value reflect.Value) {
+		if value.IsNil() {
+			return
+		}
+		cns := value.Interface().(*CustomNullableString)
+		if !cns.Valid {
+			s[memberName] = nil
+			return
+		}
+		s[memberName] = cns.String
+	})
+
+	input := []byte(`{
+	"data": {
+		"id": "someID",
+		"type": "samples",
+		"attributes": {
+			"embedded_string": "",
+			"float64": 3.14159265359,
+			"int": 99,
+			"nested": {
+				"nested_string": ""
+			},
+			"string": "someString"
+		},
+		"meta": {
+			"float64": 0,
+			"int": 0,
+			"string": "bar"
+		}
+	},
+	"jsonapi": {
+		"version": "1.0"
+	}
+}`)
+	b, err := Marshal(&s)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	if bytes.Compare(input, b) != 0 {
+		t.Errorf("Expected:\n%s\nGot:\n%s\n", string(input), string(b))
+	}
+}
 
 func TestMarshalBool(t *testing.T) {
 	type TestBool struct {
@@ -136,42 +189,125 @@ func TestMarshalBoolPtr(t *testing.T) {
 	}
 }
 
-func TestMarshal(t *testing.T) {
-	s := Sample{
-		ID:         "someID",
-		Int:        99,
-		Float64:    3.14159265359,
-		String:     "someString",
-		MetaString: "bar",
+func TestMarshalCustomTypePtr(t *testing.T) {
+	type CustomNullableString struct {
+		String string
+		Valid  bool
 	}
-	input := []byte(`{
+	type TestCustomType struct {
+		ID  string                `jsonapi:"primary,test_custom_types"`
+		Foo *CustomNullableString `jsonapi:"attribute,bar"`
+	}
+	RegisterMarshaler(reflect.TypeOf(&CustomNullableString{}), func(s map[string]interface{}, memberName string, value reflect.Value) {
+		if value.IsNil() {
+			return
+		}
+		cns := value.Interface().(*CustomNullableString)
+		if !cns.Valid {
+			s[memberName] = nil
+			return
+		}
+		s[memberName] = cns.String
+	})
+
+	t1 := TestCustomType{
+		ID: "someID",
+		Foo: &CustomNullableString{
+			String: "hello world!",
+			Valid:  true,
+		},
+	}
+	expectedValidString := []byte(`{
 	"data": {
 		"id": "someID",
-		"type": "samples",
+		"type": "test_custom_types",
 		"attributes": {
-			"embedded_string": "",
-			"float64": 3.14159265359,
-			"int": 99,
-			"nested": {
-				"nested_string": ""
-			},
-			"string": "someString"
-		},
-		"meta": {
-			"float64": 0,
-			"int": 0,
-			"string": "bar"
+			"bar": "hello world!"
 		}
 	},
 	"jsonapi": {
 		"version": "1.0"
 	}
 }`)
-	b, err := Marshal(&s)
-	if err != nil {
+	if b, err := Marshal(&t1); err != nil {
 		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(expectedValidString, b) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(expectedValidString), string(b))
+		}
 	}
-	if bytes.Compare(input, b) != 0 {
-		t.Errorf("Expected:\n%s\nGot:\n%s\n", string(input), string(b))
+
+	t2 := TestCustomType{
+		ID: "someID",
+		Foo: &CustomNullableString{
+			String: "",
+			Valid:  true,
+		},
+	}
+	expectedValidEmptyString := []byte(`{
+	"data": {
+		"id": "someID",
+		"type": "test_custom_types",
+		"attributes": {
+			"bar": ""
+		}
+	},
+	"jsonapi": {
+		"version": "1.0"
+	}
+}`)
+	if b, err := Marshal(&t2); err != nil {
+		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(expectedValidEmptyString, b) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(expectedValidEmptyString), string(b))
+		}
+	}
+
+	t3 := TestCustomType{
+		ID: "someID",
+		Foo: &CustomNullableString{
+			String: "something",
+			Valid:  false,
+		},
+	}
+	expectedNull := []byte(`{
+	"data": {
+		"id": "someID",
+		"type": "test_custom_types",
+		"attributes": {
+			"bar": null
+		}
+	},
+	"jsonapi": {
+		"version": "1.0"
+	}
+}`)
+	if b, err := Marshal(&t3); err != nil {
+		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(expectedNull, b) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(expectedNull), string(b))
+		}
+	}
+
+	t4 := TestCustomType{
+		ID: "someID",
+	}
+	expectedNil := []byte(`{
+	"data": {
+		"id": "someID",
+		"type": "test_custom_types"
+	},
+	"jsonapi": {
+		"version": "1.0"
+	}
+}`)
+	if b, err := Marshal(&t4); err != nil {
+		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(expectedNil, b) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(expectedNil), string(b))
+		}
 	}
 }

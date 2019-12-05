@@ -362,7 +362,7 @@ func TestUnmarshalCustomType(t *testing.T) {
 }
 
 func TestUnmarshalCustomTypePtr(t *testing.T) {
-	RegisterUnmarshaler(reflect.TypeOf(&CustomNullableString{}), func(v interface{}, rv reflect.Value) {
+	RegisterUnmarshaler(reflect.TypeOf(&CustomNullableString{}), func(v interface{}, value reflect.Value) {
 		ns := &CustomNullableString{}
 		if v != nil {
 			ns.Valid = true
@@ -370,7 +370,7 @@ func TestUnmarshalCustomTypePtr(t *testing.T) {
 		} else {
 			ns.Valid = false
 		}
-		rv.Set(reflect.ValueOf(ns))
+		value.Set(reflect.ValueOf(ns))
 	})
 	inputWithValue := []byte(`{
 	"data": {

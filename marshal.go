@@ -7,6 +7,10 @@ import (
 )
 
 func Marshal(v interface{}) ([]byte, error) {
+	kind := reflect.TypeOf(v).Kind()
+	if kind != reflect.Ptr && kind != reflect.Slice {
+		return nil, fmt.Errorf("v should be pointer or slice")
+	}
 	document := NewDocument()
 	if err := iterateStruct(v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
 		kind := value.Kind()
@@ -24,9 +28,7 @@ func Marshal(v interface{}) ([]byte, error) {
 			return nil
 		}
 
-		marshal(document, memberType, memberNames, value)
-
-		return nil
+		return marshal(document, memberType, memberNames, value)
 	}); err != nil {
 		return nil, err
 	}
@@ -34,7 +36,15 @@ func Marshal(v interface{}) ([]byte, error) {
 	return json.MarshalIndent(&document, "", "\t")
 }
 
-func marshal(document *Document, memberType MemberType, memberNames []string, value reflect.Value) {
+func RegisterMarshaler(t reflect.Type, u marshalerFunc) {
+	customMarshalers[t] = u
+}
+
+type marshalerFunc = func(map[string]interface{}, string, reflect.Value)
+
+var customMarshalers = make(map[reflect.Type]marshalerFunc)
+
+func marshal(document *Document, memberType MemberType, memberNames []string, value reflect.Value) error {
 	// figure out search
 	var search map[string]interface{}
 	switch memberType {
@@ -57,14 +67,23 @@ func marshal(document *Document, memberType MemberType, memberNames []string, va
 		search = search[name].(map[string]interface{})
 	}
 
-	if value.Kind() == reflect.Ptr {
-		value = value.Elem()
+	// if pointer, get non-pointer kind
+	isPtr := false
+	kind := value.Kind()
+	if kind == reflect.Ptr {
+		isPtr = true
+		kind = reflect.New(value.Type().Elem()).Elem().Kind()
 	}
 
 	// set value
-	switch value.Kind() {
+	switch kind {
 	case reflect.Bool:
-		search[memberName] = value.Interface().(bool)
+		// TODO handle pointers in a more generic way
+		if isPtr && !value.IsNil() {
+			search[memberName] = value.Interface().(*bool)
+		} else if !isPtr {
+			search[memberName] = value.Interface().(bool)
+		}
 	case reflect.String:
 		search[memberName] = value.Interface().(string)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
@@ -74,12 +93,11 @@ func marshal(document *Document, memberType MemberType, memberNames []string, va
 	case reflect.Float32, reflect.Float64:
 		search[memberName] = value.Interface().(float64)
 	default:
-		// TODO
-		// cu, ok := customUnmarshalers[rv.Type()]
-		// if !ok {
-		// 	return fmt.Errorf("Type not supported, must implement custom unmarshaller")
-		// }
-		// cu(v, rv)
+		cm, ok := customMarshalers[value.Type()]
+		if !ok {
+			return fmt.Errorf("Type: %+v, not supported, must implement custom unmarshaller", value.Type())
+		}
+		cm(search, memberName, value)
 	}
-	// return nil
+	return nil
 }
