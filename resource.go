@@ -7,6 +7,6 @@ type Resource struct {
 
 	Attributes    Attributes    `json:"attributes,omitempty"`
 	Relationships Relationships `json:"relationships,omitempty"`
-	// Links `json:"links,omitempty"`
-	Meta Meta `json:"meta,omitempty"`
+	Links         Links         `json:"links,omitempty"`
+	Meta          Meta          `json:"meta,omitempty"`
 }

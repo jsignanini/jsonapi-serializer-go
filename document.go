@@ -2,9 +2,9 @@ package jsonapi
 
 type document struct {
 	JSONAPI JSONAPI `json:"jsonapi"`
-	Meta    Meta    `json:"meta,omitempty"`
+	Meta    *Meta   `json:"meta,omitempty"`
+	Links   *Links  `json:"links,omitempty"`
 	// Errors
-	// Links
 	// Included
 }
 

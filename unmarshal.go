@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strings"
 )
 
 func getValueForMember(document *Document, memberType MemberType, memberNames ...string) (interface{}, error) {
@@ -229,23 +228,4 @@ func deepSearch(tree map[string]interface{}, keys ...string) (interface{}, bool)
 		return value, true
 	}
 	return deepSearch(tree[key].(map[string]interface{}), keys...)
-}
-
-func getMember(field reflect.StructField) (MemberType, string, error) {
-	tag, ok := field.Tag.Lookup(tagKey)
-	if !ok {
-		return "", "", fmt.Errorf("tag: %s, not specified", tagKey)
-	}
-	if tag == "" {
-		return "", "", fmt.Errorf("tag: %s, was empty", tagKey)
-	}
-	tagParts := strings.Split(tag, ",")
-	if len(tagParts) != 2 {
-		return "", "", fmt.Errorf("tag: %s, was not formatted properly", tagKey)
-	}
-	memberType, err := NewMemberType(tagParts[0])
-	if err != nil {
-		return "", "", err
-	}
-	return memberType, tagParts[1], nil
 }

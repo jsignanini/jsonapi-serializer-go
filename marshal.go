@@ -6,6 +6,47 @@ import (
 	"reflect"
 )
 
+type MarshalOpts struct {
+	Links *Links
+	Meta  *Meta
+}
+
+func MarshalWithOpts(v interface{}, opts *MarshalOpts) ([]byte, error) {
+	kind := reflect.TypeOf(v).Kind()
+	if kind != reflect.Ptr && kind != reflect.Slice {
+		return nil, fmt.Errorf("v should be pointer or slice")
+	}
+	document := NewDocument()
+	if opts != nil && opts.Links != nil {
+		document.Links = opts.Links
+	}
+	if opts != nil && opts.Meta != nil {
+		document.Meta = opts.Meta
+	}
+	if err := iterateStruct(v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
+		kind := value.Kind()
+
+		if memberType == MemberTypePrimary {
+			if kind != reflect.String {
+				return fmt.Errorf("ID must be a string")
+			}
+			id, _ := value.Interface().(string)
+			if id == "" {
+				return nil
+			}
+			document.Data.ID = id
+			document.Data.Type = memberNames[0]
+			return nil
+		}
+
+		return marshal(document, memberType, memberNames, value)
+	}); err != nil {
+		return nil, err
+	}
+
+	return json.MarshalIndent(&document, "", "\t")
+}
+
 func Marshal(v interface{}) ([]byte, error) {
 	kind := reflect.TypeOf(v).Kind()
 	if kind != reflect.Ptr && kind != reflect.Slice {
@@ -25,6 +66,14 @@ func Marshal(v interface{}) ([]byte, error) {
 			}
 			document.Data.ID = id
 			document.Data.Type = memberNames[0]
+			return nil
+		}
+		if memberType == MemberTypeLinks {
+			links, ok := value.Interface().(Links)
+			if !ok {
+				return fmt.Errorf("field tagged as link needs to be of Links type")
+			}
+			document.Data.Links = links
 			return nil
 		}
 
@@ -95,7 +144,7 @@ func marshal(document *Document, memberType MemberType, memberNames []string, va
 	default:
 		cm, ok := customMarshalers[value.Type()]
 		if !ok {
-			return fmt.Errorf("Type: %+v, not supported, must implement custom unmarshaller", value.Type())
+			return fmt.Errorf("Type: %+v, not supported, must implement custom marshaller", value.Type())
 		}
 		cm(search, memberName, value)
 	}
