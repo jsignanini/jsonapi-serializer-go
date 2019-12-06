@@ -49,7 +49,7 @@ func TestMarshal(t *testing.T) {
 		"version": "1.0"
 	}
 }`)
-	b, err := Marshal(&s)
+	b, err := Marshal(&s, nil)
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -79,7 +79,7 @@ func TestMarshalBool(t *testing.T) {
 		"version": "1.0"
 	}
 }`)
-	if b, err := Marshal(&testTrue); err != nil {
+	if b, err := Marshal(&testTrue, nil); err != nil {
 		t.Errorf(err.Error())
 	} else {
 		if bytes.Compare(expectedTrue, b) != 0 {
@@ -103,7 +103,7 @@ func TestMarshalBool(t *testing.T) {
 		"version": "1.0"
 	}
 }`)
-	if b, err := Marshal(&testFalse); err != nil {
+	if b, err := Marshal(&testFalse, nil); err != nil {
 		t.Errorf(err.Error())
 	} else {
 		if bytes.Compare(expectedFalse, b) != 0 {
@@ -135,7 +135,7 @@ func TestMarshalBoolPtr(t *testing.T) {
 		"version": "1.0"
 	}
 }`)
-	if b, err := Marshal(&testTrue); err != nil {
+	if b, err := Marshal(&testTrue, nil); err != nil {
 		t.Errorf(err.Error())
 	} else {
 		if bytes.Compare(expectedTrue, b) != 0 {
@@ -159,7 +159,7 @@ func TestMarshalBoolPtr(t *testing.T) {
 		"version": "1.0"
 	}
 }`)
-	if b, err := Marshal(&testFalse); err != nil {
+	if b, err := Marshal(&testFalse, nil); err != nil {
 		t.Errorf(err.Error())
 	} else {
 		if bytes.Compare(expectedFalse, b) != 0 {
@@ -180,7 +180,7 @@ func TestMarshalBoolPtr(t *testing.T) {
 		"version": "1.0"
 	}
 }`)
-	if b, err := Marshal(&testNil); err != nil {
+	if b, err := Marshal(&testNil, nil); err != nil {
 		t.Errorf(err.Error())
 	} else {
 		if bytes.Compare(expectedNil, b) != 0 {
@@ -229,7 +229,7 @@ func TestMarshalCustomTypePtr(t *testing.T) {
 		"version": "1.0"
 	}
 }`)
-	if b, err := Marshal(&t1); err != nil {
+	if b, err := Marshal(&t1, nil); err != nil {
 		t.Errorf(err.Error())
 	} else {
 		if bytes.Compare(expectedValidString, b) != 0 {
@@ -256,7 +256,7 @@ func TestMarshalCustomTypePtr(t *testing.T) {
 		"version": "1.0"
 	}
 }`)
-	if b, err := Marshal(&t2); err != nil {
+	if b, err := Marshal(&t2, nil); err != nil {
 		t.Errorf(err.Error())
 	} else {
 		if bytes.Compare(expectedValidEmptyString, b) != 0 {
@@ -283,7 +283,7 @@ func TestMarshalCustomTypePtr(t *testing.T) {
 		"version": "1.0"
 	}
 }`)
-	if b, err := Marshal(&t3); err != nil {
+	if b, err := Marshal(&t3, nil); err != nil {
 		t.Errorf(err.Error())
 	} else {
 		if bytes.Compare(expectedNull, b) != 0 {
@@ -303,7 +303,7 @@ func TestMarshalCustomTypePtr(t *testing.T) {
 		"version": "1.0"
 	}
 }`)
-	if b, err := Marshal(&t4); err != nil {
+	if b, err := Marshal(&t4, nil); err != nil {
 		t.Errorf(err.Error())
 	} else {
 		if bytes.Compare(expectedNil, b) != 0 {

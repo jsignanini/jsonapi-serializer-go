@@ -6,53 +6,26 @@ import (
 	"reflect"
 )
 
-type MarshalOpts struct {
+type MarshalParams struct {
 	Links *Links
 	Meta  *Meta
 }
 
-func MarshalWithOpts(v interface{}, opts *MarshalOpts) ([]byte, error) {
+func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 	kind := reflect.TypeOf(v).Kind()
 	if kind != reflect.Ptr && kind != reflect.Slice {
 		return nil, fmt.Errorf("v should be pointer or slice")
 	}
+
+	// handle optional params
 	document := NewDocument()
-	if opts != nil && opts.Links != nil {
-		document.Links = opts.Links
+	if p != nil && p.Links != nil {
+		document.Links = p.Links
 	}
-	if opts != nil && opts.Meta != nil {
-		document.Meta = opts.Meta
-	}
-	if err := iterateStruct(v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
-		kind := value.Kind()
-
-		if memberType == MemberTypePrimary {
-			if kind != reflect.String {
-				return fmt.Errorf("ID must be a string")
-			}
-			id, _ := value.Interface().(string)
-			if id == "" {
-				return nil
-			}
-			document.Data.ID = id
-			document.Data.Type = memberNames[0]
-			return nil
-		}
-
-		return marshal(document, memberType, memberNames, value)
-	}); err != nil {
-		return nil, err
+	if p != nil && p.Meta != nil {
+		document.Meta = p.Meta
 	}
 
-	return json.MarshalIndent(&document, "", "\t")
-}
-
-func Marshal(v interface{}) ([]byte, error) {
-	kind := reflect.TypeOf(v).Kind()
-	if kind != reflect.Ptr && kind != reflect.Slice {
-		return nil, fmt.Errorf("v should be pointer or slice")
-	}
-	document := NewDocument()
 	if err := iterateStruct(v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
 		kind := value.Kind()
 

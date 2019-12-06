@@ -39,7 +39,7 @@ func TestDocumentLinks(t *testing.T) {
 		"self": "https://example.com"
 	}
 }`)
-	if b, err := MarshalWithOpts(&t1, &MarshalOpts{
+	if b, err := Marshal(&t1, &MarshalParams{
 		Links: &links,
 	}); err != nil {
 		t.Errorf(err.Error())
@@ -84,7 +84,7 @@ func TestResourceLinks(t *testing.T) {
 		"version": "1.0"
 	}
 }`)
-	if b, err := Marshal(&t1); err != nil {
+	if b, err := Marshal(&t1, nil); err != nil {
 		t.Errorf(err.Error())
 	} else {
 		if bytes.Compare(expected, b) != 0 {
@@ -132,7 +132,7 @@ func TestResourceWithEmbeddedLinks(t *testing.T) {
 		"version": "1.0"
 	}
 }`)
-	if b, err := Marshal(&c); err != nil {
+	if b, err := Marshal(&c, nil); err != nil {
 		t.Errorf(err.Error())
 	} else {
 		if bytes.Compare(expected, b) != 0 {
@@ -152,7 +152,7 @@ func TestResourceLinksWrongType(t *testing.T) {
 		Foo:     "hello world!",
 		MyLinks: "should have been a Links type",
 	}
-	if _, err := Marshal(&t1); err == nil {
+	if _, err := Marshal(&t1, nil); err == nil {
 		t.Errorf("Expected wrong type error when links tag is set to a non Links type")
 	}
 }
