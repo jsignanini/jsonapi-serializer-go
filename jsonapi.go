@@ -1,8 +1,19 @@
 package jsonapi
 
-var tagKey = "jsonapi"
+var (
+	jsonPrefix = ""
+	jsonIndent = "\t"
+	tagKey     = "jsonapi"
+)
 
-type JSONAPI struct {
-	Version string `json:"version,omitempty"`
-	Meta    Meta   `json:"meta,omitempty"`
+func SetJSONPrefix(prefix string) {
+	jsonPrefix = prefix
+}
+
+func SetJSONIndent(indent string) {
+	jsonIndent = indent
+}
+
+func SetTagKey(key string) {
+	tagKey = key
 }

@@ -26,6 +26,7 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 		document.Meta = p.Meta
 	}
 
+	document.Data = NewResource()
 	if err := iterateStruct(v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
 		kind := value.Kind()
 
@@ -55,7 +56,7 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 		return nil, err
 	}
 
-	return json.MarshalIndent(&document, "", "\t")
+	return json.MarshalIndent(&document, jsonPrefix, jsonIndent)
 }
 
 func RegisterMarshaler(t reflect.Type, u marshalerFunc) {

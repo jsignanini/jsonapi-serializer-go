@@ -10,3 +10,10 @@ type Resource struct {
 	Links         Links         `json:"links,omitempty"`
 	Meta          Meta          `json:"meta,omitempty"`
 }
+
+func NewResource() *Resource {
+	return &Resource{
+		Attributes: Attributes{},
+		Meta:       Meta{},
+	}
+}
