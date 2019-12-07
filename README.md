@@ -1,4 +1,8 @@
-# JSON:API
+# jsonapi-serializer
+
+[![GoDoc](http://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/jsignanini/jsonapi-serializer)
+[![Build Status](https://travis-ci.org/jsignanini/jsonapi-serializer.svg?branch=master)](https://travis-ci.org/jsignanini/jsonapi-serializer)
+[![Go Report Card](https://goreportcard.com/badge/github.com/jsignanini/jsonapi-serializer)](https://goreportcard.com/report/github.com/jsignanini/jsonapi-serializer)
 
 ### TODOs
 
