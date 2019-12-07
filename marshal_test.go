@@ -311,3 +311,83 @@ func TestMarshalCustomTypePtr(t *testing.T) {
 		}
 	}
 }
+
+func TestMarshalString(t *testing.T) {
+	type TestString struct {
+		ID  string `jsonapi:"primary,test_strings"`
+		Foo string `jsonapi:"attribute,bar"`
+	}
+	ts := TestString{
+		ID:  "someID",
+		Foo: "hello world!",
+	}
+	expected := []byte(`{
+	"data": {
+		"id": "someID",
+		"type": "test_strings",
+		"attributes": {
+			"bar": "hello world!"
+		}
+	},
+	"jsonapi": {
+		"version": "1.0"
+	}
+}`)
+	if b, err := Marshal(&ts, nil); err != nil {
+		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(expected, b) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(expected), string(b))
+		}
+	}
+}
+
+func TestMarshalStringPtr(t *testing.T) {
+	type TestStringPtr struct {
+		ID  string  `jsonapi:"primary,test_strings"`
+		Foo *string `jsonapi:"attribute,bar"`
+	}
+	s := "hello world!"
+	test := TestStringPtr{
+		ID:  "someID",
+		Foo: &s,
+	}
+	expected := []byte(`{
+	"data": {
+		"id": "someID",
+		"type": "test_strings",
+		"attributes": {
+			"bar": "hello world!"
+		}
+	},
+	"jsonapi": {
+		"version": "1.0"
+	}
+}`)
+	if b, err := Marshal(&test, nil); err != nil {
+		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(expected, b) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(expected), string(b))
+		}
+	}
+	testNil := TestStringPtr{
+		ID: "someID",
+	}
+	expectedNil := []byte(`{
+	"data": {
+		"id": "someID",
+		"type": "test_strings"
+	},
+	"jsonapi": {
+		"version": "1.0"
+	}
+}`)
+	if b, err := Marshal(&testNil, nil); err != nil {
+		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(expectedNil, b) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(expectedNil), string(b))
+		}
+	}
+}
