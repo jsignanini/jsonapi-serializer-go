@@ -312,6 +312,51 @@ func TestMarshalCustomTypePtr(t *testing.T) {
 	}
 }
 
+func TestMarshalCompound(t *testing.T) {
+	type TestCompound struct {
+		ID  string `jsonapi:"primary,test_compounds"`
+		Foo string `jsonapi:"attribute,bar"`
+	}
+	tcs := []*TestCompound{
+		{
+			ID:  "someID1",
+			Foo: "hello",
+		},
+		{
+			ID:  "someID2",
+			Foo: "world!",
+		},
+	}
+	expected := []byte(`{
+	"data": [
+		{
+			"id": "someID1",
+			"type": "test_compounds",
+			"attributes": {
+				"bar": "hello"
+			}
+		},
+		{
+			"id": "someID2",
+			"type": "test_compounds",
+			"attributes": {
+				"bar": "world!"
+			}
+		}
+	],
+	"jsonapi": {
+		"version": "1.0"
+	}
+}`)
+	if b, err := Marshal(&tcs, nil); err != nil {
+		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(expected, b) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(expected), string(b))
+		}
+	}
+}
+
 func TestMarshalString(t *testing.T) {
 	type TestString struct {
 		ID  string `jsonapi:"primary,test_strings"`

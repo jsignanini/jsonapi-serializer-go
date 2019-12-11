@@ -17,46 +17,103 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 		return nil, fmt.Errorf("v should be pointer or slice")
 	}
 
-	// handle optional params
-	document := NewDocument()
-	if p != nil && p.Links != nil {
-		document.Links = p.Links
-	}
-	if p != nil && p.Meta != nil {
-		document.Meta = p.Meta
+	isSlice := false
+	if reflect.TypeOf(v).Elem().Kind() == reflect.Slice {
+		isSlice = true
 	}
 
-	document.Data = NewResource()
-	if err := iterateStruct(v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
-		kind := value.Kind()
+	if !isSlice {
+		// handle optional params
+		document := NewDocument()
+		if p != nil && p.Links != nil {
+			document.Links = p.Links
+		}
+		if p != nil && p.Meta != nil {
+			document.Meta = p.Meta
+		}
 
-		if memberType == MemberTypePrimary {
-			if kind != reflect.String {
-				return fmt.Errorf("ID must be a string")
-			}
-			id, _ := value.Interface().(string)
-			if id == "" {
+		document.Data = NewResource()
+		if err := iterateStruct(v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
+			kind := value.Kind()
+
+			if memberType == MemberTypePrimary {
+				if kind != reflect.String {
+					return fmt.Errorf("ID must be a string")
+				}
+				id, _ := value.Interface().(string)
+				if id == "" {
+					return nil
+				}
+				document.Data.ID = id
+				document.Data.Type = memberNames[0]
 				return nil
 			}
-			document.Data.ID = id
-			document.Data.Type = memberNames[0]
-			return nil
-		}
-		if memberType == MemberTypeLinks {
-			links, ok := value.Interface().(Links)
-			if !ok {
-				return fmt.Errorf("field tagged as link needs to be of Links type")
+			if memberType == MemberTypeLinks {
+				links, ok := value.Interface().(Links)
+				if !ok {
+					return fmt.Errorf("field tagged as link needs to be of Links type")
+				}
+				document.Data.Links = links
+				return nil
 			}
-			document.Data.Links = links
-			return nil
+
+			return marshal(document.Data, memberType, memberNames, value)
+		}); err != nil {
+			return nil, err
 		}
 
-		return marshal(document, memberType, memberNames, value)
-	}); err != nil {
-		return nil, err
-	}
+		return json.MarshalIndent(&document, jsonPrefix, jsonIndent)
+	} else {
+		document := NewCompoundDocument()
+		if p != nil && p.Links != nil {
+			document.Links = p.Links
+		}
+		if p != nil && p.Meta != nil {
+			document.Meta = p.Meta
+		}
+		document.Data = []*Resource{}
 
-	return json.MarshalIndent(&document, jsonPrefix, jsonIndent)
+		values := reflect.ValueOf(v).Elem()
+		for i := 0; i < values.Len(); i++ {
+			value := values.Index(i)
+			if value.Kind() != reflect.Ptr {
+				return nil, fmt.Errorf("v should be pointer or slice of pointers")
+			}
+
+			r := NewResource()
+			if err := iterateStruct(value.Interface(), func(value reflect.Value, memberType MemberType, memberNames ...string) error {
+				kind := value.Kind()
+
+				if memberType == MemberTypePrimary {
+					if kind != reflect.String {
+						return fmt.Errorf("ID must be a string")
+					}
+					id, _ := value.Interface().(string)
+					if id == "" {
+						return nil
+					}
+					r.ID = id
+					r.Type = memberNames[0]
+					return nil
+				}
+				if memberType == MemberTypeLinks {
+					links, ok := value.Interface().(Links)
+					if !ok {
+						return fmt.Errorf("field tagged as link needs to be of Links type")
+					}
+					r.Links = links
+					return nil
+				}
+
+				return marshal(r, memberType, memberNames, value)
+			}); err != nil {
+				return nil, err
+			}
+			document.Data = append(document.Data, r)
+		}
+
+		return json.MarshalIndent(&document, jsonPrefix, jsonIndent)
+	}
 }
 
 func RegisterMarshaler(t reflect.Type, u marshalerFunc) {
@@ -67,14 +124,14 @@ type marshalerFunc = func(map[string]interface{}, string, reflect.Value)
 
 var customMarshalers = make(map[reflect.Type]marshalerFunc)
 
-func marshal(document *Document, memberType MemberType, memberNames []string, value reflect.Value) error {
+func marshal(resource *Resource, memberType MemberType, memberNames []string, value reflect.Value) error {
 	// figure out search
 	var search map[string]interface{}
 	switch memberType {
 	case MemberTypeAttribute:
-		search = document.Data.Attributes
+		search = resource.Attributes
 	case MemberTypeMeta:
-		search = document.Data.Meta
+		search = resource.Meta
 	}
 
 	// iterate memberNames
