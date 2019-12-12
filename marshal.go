@@ -155,27 +155,68 @@ func marshal(resource *Resource, memberType MemberType, memberNames []string, va
 		kind = reflect.New(value.Type().Elem()).Elem().Kind()
 	}
 
+	// ignore nil pointers
+	if isPtr && value.IsNil() {
+		return nil
+	}
+
 	// set value
 	switch kind {
 	case reflect.Bool:
 		// TODO handle pointers in a more generic way
-		if isPtr && !value.IsNil() {
+		if isPtr {
 			search[memberName] = value.Interface().(*bool)
-		} else if !isPtr {
+		} else {
 			search[memberName] = value.Interface().(bool)
 		}
 	case reflect.String:
-		if isPtr && !value.IsNil() {
+		if isPtr {
 			search[memberName] = value.Interface().(*string)
-		} else if !isPtr {
+		} else {
 			search[memberName] = value.Interface().(string)
 		}
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		search[memberName] = value.Interface().(int)
+	case reflect.Int:
+		if isPtr {
+			search[memberName] = value.Interface().(*int)
+		} else {
+			search[memberName] = value.Interface().(int)
+		}
+	case reflect.Int8:
+		if isPtr {
+			search[memberName] = value.Interface().(*int8)
+		} else {
+			search[memberName] = value.Interface().(int8)
+		}
+	case reflect.Int16:
+		if isPtr {
+			search[memberName] = value.Interface().(*int16)
+		} else {
+			search[memberName] = value.Interface().(int16)
+		}
+	case reflect.Int32:
+		if isPtr {
+			search[memberName] = value.Interface().(*int32)
+		} else {
+			search[memberName] = value.Interface().(int32)
+		}
+	case reflect.Int64:
+		if isPtr {
+			search[memberName] = value.Interface().(*int64)
+		} else {
+			search[memberName] = value.Interface().(int64)
+		}
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		search[memberName] = value.Interface().(uint)
+		if isPtr {
+			search[memberName] = value.Interface().(*uint)
+		} else {
+			search[memberName] = value.Interface().(uint)
+		}
 	case reflect.Float32, reflect.Float64:
-		search[memberName] = value.Interface().(float64)
+		if isPtr {
+			search[memberName] = value.Interface().(*float64)
+		} else {
+			search[memberName] = value.Interface().(float64)
+		}
 	default:
 		cm, ok := customMarshalers[value.Type()]
 		if !ok {
