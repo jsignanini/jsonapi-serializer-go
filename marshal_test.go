@@ -477,7 +477,7 @@ func TestMarshalIntPtr(t *testing.T) {
 		ID:  "someID",
 		Foo: &seven,
 	}
-	want := []byte(`{
+	expectedSeven := []byte(`{
 	"data": {
 		"id": "someID",
 		"type": "test_ints",
@@ -492,14 +492,14 @@ func TestMarshalIntPtr(t *testing.T) {
 	if got, err := Marshal(&sevenPtr, nil); err != nil {
 		t.Errorf(err.Error())
 	} else {
-		if bytes.Compare(got, want) != 0 {
-			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(got), string(want))
+		if bytes.Compare(got, expectedSeven) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(got), string(expectedSeven))
 		}
 	}
 	sevenPtrNil := TestInt{
 		ID: "someID",
 	}
-	want := []byte(`{
+	expectedMissing := []byte(`{
 	"data": {
 		"id": "someID",
 		"type": "test_ints"
@@ -508,11 +508,11 @@ func TestMarshalIntPtr(t *testing.T) {
 		"version": "1.0"
 	}
 }`)
-	if got, err := Marshal(&sevenPtr, nil); err != nil {
+	if got, err := Marshal(&sevenPtrNil, nil); err != nil {
 		t.Errorf(err.Error())
 	} else {
-		if bytes.Compare(got, want) != 0 {
-			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(got), string(want))
+		if bytes.Compare(got, expectedMissing) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(got), string(expectedMissing))
 		}
 	}
 }
