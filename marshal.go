@@ -155,27 +155,107 @@ func marshal(resource *Resource, memberType MemberType, memberNames []string, va
 		kind = reflect.New(value.Type().Elem()).Elem().Kind()
 	}
 
+	// ignore nil pointers
+	if isPtr && value.IsNil() {
+		return nil
+	}
+
 	// set value
 	switch kind {
 	case reflect.Bool:
 		// TODO handle pointers in a more generic way
-		if isPtr && !value.IsNil() {
+		if isPtr {
 			search[memberName] = value.Interface().(*bool)
-		} else if !isPtr {
+		} else {
 			search[memberName] = value.Interface().(bool)
 		}
 	case reflect.String:
-		if isPtr && !value.IsNil() {
+		if isPtr {
 			search[memberName] = value.Interface().(*string)
-		} else if !isPtr {
+		} else {
 			search[memberName] = value.Interface().(string)
 		}
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		search[memberName] = value.Interface().(int)
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		search[memberName] = value.Interface().(uint)
-	case reflect.Float32, reflect.Float64:
-		search[memberName] = value.Interface().(float64)
+	case reflect.Int:
+		if isPtr {
+			search[memberName] = value.Interface().(*int)
+		} else {
+			search[memberName] = value.Interface().(int)
+		}
+	case reflect.Int8:
+		if isPtr {
+			search[memberName] = value.Interface().(*int8)
+		} else {
+			search[memberName] = value.Interface().(int8)
+		}
+	case reflect.Int16:
+		if isPtr {
+			search[memberName] = value.Interface().(*int16)
+		} else {
+			search[memberName] = value.Interface().(int16)
+		}
+	case reflect.Int32:
+		if isPtr {
+			search[memberName] = value.Interface().(*int32)
+		} else {
+			search[memberName] = value.Interface().(int32)
+		}
+	case reflect.Int64:
+		if isPtr {
+			search[memberName] = value.Interface().(*int64)
+		} else {
+			search[memberName] = value.Interface().(int64)
+		}
+	case reflect.Uint:
+		if isPtr {
+			search[memberName] = value.Interface().(*uint)
+		} else {
+			search[memberName] = value.Interface().(uint)
+		}
+	case reflect.Uint8:
+		if isPtr {
+			search[memberName] = value.Interface().(*uint8)
+		} else {
+			search[memberName] = value.Interface().(uint8)
+		}
+	case reflect.Uint16:
+		if isPtr {
+			search[memberName] = value.Interface().(*uint16)
+		} else {
+			search[memberName] = value.Interface().(uint16)
+		}
+	case reflect.Uint32:
+		if isPtr {
+			search[memberName] = value.Interface().(*uint32)
+		} else {
+			search[memberName] = value.Interface().(uint32)
+		}
+	case reflect.Uint64:
+		if isPtr {
+			search[memberName] = value.Interface().(*uint64)
+		} else {
+			search[memberName] = value.Interface().(uint64)
+		}
+	case reflect.Uintptr:
+		if isPtr {
+			search[memberName] = value.Interface().(*uintptr)
+		} else {
+			search[memberName] = value.Interface().(uintptr)
+		}
+	case reflect.Float32:
+		if isPtr {
+			search[memberName] = value.Interface().(*float32)
+		} else {
+			search[memberName] = value.Interface().(float32)
+		}
+	case reflect.Float64:
+		if isPtr {
+			search[memberName] = value.Interface().(*float64)
+		} else {
+			search[memberName] = value.Interface().(float64)
+		}
+	// TODO
+	// case reflect.Complex64:
+	// case reflect.Complex128:
 	default:
 		cm, ok := customMarshalers[value.Type()]
 		if !ok {
