@@ -205,11 +205,41 @@ func marshal(resource *Resource, memberType MemberType, memberNames []string, va
 		} else {
 			search[memberName] = value.Interface().(int64)
 		}
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+	case reflect.Uint:
 		if isPtr {
 			search[memberName] = value.Interface().(*uint)
 		} else {
 			search[memberName] = value.Interface().(uint)
+		}
+	case reflect.Uint8:
+		if isPtr {
+			search[memberName] = value.Interface().(*uint8)
+		} else {
+			search[memberName] = value.Interface().(uint8)
+		}
+	case reflect.Uint16:
+		if isPtr {
+			search[memberName] = value.Interface().(*uint16)
+		} else {
+			search[memberName] = value.Interface().(uint16)
+		}
+	case reflect.Uint32:
+		if isPtr {
+			search[memberName] = value.Interface().(*uint32)
+		} else {
+			search[memberName] = value.Interface().(uint32)
+		}
+	case reflect.Uint64:
+		if isPtr {
+			search[memberName] = value.Interface().(*uint64)
+		} else {
+			search[memberName] = value.Interface().(uint64)
+		}
+	case reflect.Uintptr:
+		if isPtr {
+			search[memberName] = value.Interface().(*uintptr)
+		} else {
+			search[memberName] = value.Interface().(uintptr)
 		}
 	case reflect.Float32, reflect.Float64:
 		if isPtr {
