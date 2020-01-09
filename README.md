@@ -1,9 +1,9 @@
-# jsonapi-serializer
+# jsonapi-serializer-go
 
-[![GoDoc](http://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/jsignanini/jsonapi-serializer)
-[![Build Status](https://travis-ci.org/jsignanini/jsonapi-serializer.svg?branch=master)](https://travis-ci.org/jsignanini/jsonapi-serializer)
-[![Go Report Card](https://goreportcard.com/badge/github.com/jsignanini/jsonapi-serializer)](https://goreportcard.com/report/github.com/jsignanini/jsonapi-serializer)
-[![Coverage Status](https://coveralls.io/repos/github/jsignanini/jsonapi-serializer/badge.svg?branch=master)](https://coveralls.io/github/jsignanini/jsonapi-serializer?branch=master)
+[![GoDoc](http://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/jsignanini/jsonapi-serializer-go)
+[![Build Status](https://travis-ci.org/jsignanini/jsonapi-serializer-go.svg?branch=master)](https://travis-ci.org/jsignanini/jsonapi-serializer-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/jsignanini/jsonapi-serializer-go)](https://goreportcard.com/report/github.com/jsignanini/jsonapi-serializer-go)
+[![Coverage Status](https://coveralls.io/repos/github/jsignanini/jsonapi-serializer-go/badge.svg?branch=master)](https://coveralls.io/github/jsignanini/jsonapi-serializer-go?branch=master)
 
 ### TODOs
 
