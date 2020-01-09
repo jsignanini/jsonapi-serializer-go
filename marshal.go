@@ -241,12 +241,21 @@ func marshal(resource *Resource, memberType MemberType, memberNames []string, va
 		} else {
 			search[memberName] = value.Interface().(uintptr)
 		}
-	case reflect.Float32, reflect.Float64:
+	case reflect.Float32:
+		if isPtr {
+			search[memberName] = value.Interface().(*float32)
+		} else {
+			search[memberName] = value.Interface().(float32)
+		}
+	case reflect.Float64:
 		if isPtr {
 			search[memberName] = value.Interface().(*float64)
 		} else {
 			search[memberName] = value.Interface().(float64)
 		}
+	// TODO
+	// case reflect.Complex64:
+	// case reflect.Complex128:
 	default:
 		cm, ok := customMarshalers[value.Type()]
 		if !ok {

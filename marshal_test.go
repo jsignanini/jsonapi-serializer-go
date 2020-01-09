@@ -1316,3 +1316,163 @@ func TestMarshalUintptrPtr(t *testing.T) {
 		}
 	}
 }
+
+func TestMarshalFloat32(t *testing.T) {
+	type TestInt struct {
+		ID  string  `jsonapi:"primary,test_ints"`
+		Foo float32 `jsonapi:"attribute,bar"`
+	}
+	seven := TestInt{
+		ID:  "someID",
+		Foo: 7.99,
+	}
+	want := []byte(`{
+	"data": {
+		"id": "someID",
+		"type": "test_ints",
+		"attributes": {
+			"bar": 7.99
+		}
+	},
+	"jsonapi": {
+		"version": "1.0"
+	}
+}`)
+	if got, err := Marshal(&seven, nil); err != nil {
+		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(got, want) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(got), string(want))
+		}
+	}
+}
+
+func TestMarshalFloat32Ptr(t *testing.T) {
+	type TestInt struct {
+		ID  string   `jsonapi:"primary,test_ints"`
+		Foo *float32 `jsonapi:"attribute,bar"`
+	}
+	seven := float32(7.99)
+	sevenPtr := TestInt{
+		ID:  "someID",
+		Foo: &seven,
+	}
+	expectedSeven := []byte(`{
+	"data": {
+		"id": "someID",
+		"type": "test_ints",
+		"attributes": {
+			"bar": 7.99
+		}
+	},
+	"jsonapi": {
+		"version": "1.0"
+	}
+}`)
+	if got, err := Marshal(&sevenPtr, nil); err != nil {
+		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(got, expectedSeven) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(got), string(expectedSeven))
+		}
+	}
+	sevenPtrNil := TestInt{
+		ID: "someID",
+	}
+	expectedMissing := []byte(`{
+	"data": {
+		"id": "someID",
+		"type": "test_ints"
+	},
+	"jsonapi": {
+		"version": "1.0"
+	}
+}`)
+	if got, err := Marshal(&sevenPtrNil, nil); err != nil {
+		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(got, expectedMissing) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(got), string(expectedMissing))
+		}
+	}
+}
+
+func TestMarshalFloat64(t *testing.T) {
+	type TestInt struct {
+		ID  string  `jsonapi:"primary,test_ints"`
+		Foo float64 `jsonapi:"attribute,bar"`
+	}
+	seven := TestInt{
+		ID:  "someID",
+		Foo: 7.99,
+	}
+	want := []byte(`{
+	"data": {
+		"id": "someID",
+		"type": "test_ints",
+		"attributes": {
+			"bar": 7.99
+		}
+	},
+	"jsonapi": {
+		"version": "1.0"
+	}
+}`)
+	if got, err := Marshal(&seven, nil); err != nil {
+		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(got, want) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(got), string(want))
+		}
+	}
+}
+
+func TestMarshalFloat64Ptr(t *testing.T) {
+	type TestInt struct {
+		ID  string   `jsonapi:"primary,test_ints"`
+		Foo *float64 `jsonapi:"attribute,bar"`
+	}
+	seven := float64(7.99)
+	sevenPtr := TestInt{
+		ID:  "someID",
+		Foo: &seven,
+	}
+	expectedSeven := []byte(`{
+	"data": {
+		"id": "someID",
+		"type": "test_ints",
+		"attributes": {
+			"bar": 7.99
+		}
+	},
+	"jsonapi": {
+		"version": "1.0"
+	}
+}`)
+	if got, err := Marshal(&sevenPtr, nil); err != nil {
+		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(got, expectedSeven) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(got), string(expectedSeven))
+		}
+	}
+	sevenPtrNil := TestInt{
+		ID: "someID",
+	}
+	expectedMissing := []byte(`{
+	"data": {
+		"id": "someID",
+		"type": "test_ints"
+	},
+	"jsonapi": {
+		"version": "1.0"
+	}
+}`)
+	if got, err := Marshal(&sevenPtrNil, nil); err != nil {
+		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(got, expectedMissing) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(got), string(expectedMissing))
+		}
+	}
+}
