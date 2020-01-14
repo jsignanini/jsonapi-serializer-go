@@ -171,9 +171,9 @@ func marshal(resource *Resource, memberType MemberType, memberNames []string, va
 		}
 	case reflect.String:
 		if isPtr {
-			search[memberName] = value.Interface().(*string)
+			search[memberName] = value.Interface()
 		} else {
-			search[memberName] = value.Interface().(string)
+			search[memberName] = value.Interface()
 		}
 	case reflect.Int:
 		if isPtr {
