@@ -12,13 +12,18 @@ type MarshalParams struct {
 }
 
 func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
-	kind := reflect.TypeOf(v).Kind()
+	rType := reflect.TypeOf(v)
+	rValue := reflect.ValueOf(v)
+
+	// only allow pointer or slice kind
+	kind := rType.Kind()
 	if kind != reflect.Ptr && kind != reflect.Slice {
 		return nil, fmt.Errorf("v should be pointer or slice")
 	}
 
+	// check if it's a slice
 	isSlice := false
-	if reflect.TypeOf(v).Elem().Kind() == reflect.Slice {
+	if rType.Elem().Kind() == reflect.Slice {
 		isSlice = true
 	}
 
@@ -56,8 +61,60 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 				document.Data.Links = links
 				return nil
 			}
+			if memberType == MemberTypeRelationship {
+				if document.Data.Relationships == nil {
+					document.Data.Relationships = Relationships{}
+				}
+				rel := NewRelationship()
+				document.Data.Relationships[memberNames[0]] = rel
 
-			return marshal(document.Data, memberType, memberNames, value)
+				// iterate relationship
+				newIncl := NewResource()
+				if err := iterateStruct(value.Interface(), func(v2 reflect.Value, memberType MemberType, memberNames ...string) error {
+					kind := v2.Kind()
+
+					if memberType == MemberTypePrimary {
+						if kind != reflect.String {
+							return fmt.Errorf("ID must be a string")
+						}
+						id, _ := v2.Interface().(string)
+						if id == "" {
+							return nil
+						}
+						rel.Data.ID = id
+						newIncl.ID = id
+						rel.Data.Type = memberNames[0]
+						newIncl.Type = memberNames[0]
+						return nil
+					}
+					if memberType == MemberTypeLinks {
+						links, ok := v2.Interface().(Links)
+						if !ok {
+							return fmt.Errorf("field tagged as link needs to be of Links type")
+						}
+						newIncl.Links = links
+						return nil
+					}
+
+					if err := marshal(&document.document, newIncl, memberType, memberNames, v2); err != nil {
+						return err
+					}
+					return nil
+				}); err != nil {
+					return err
+				}
+				// make sure it's only added once
+				for _, incl := range document.Included {
+					if incl.Type == newIncl.Type && incl.ID == newIncl.ID {
+						return nil
+					}
+				}
+				document.Included = append(document.Included, newIncl)
+
+				return nil
+			}
+
+			return marshal(&document.document, document.Data, memberType, memberNames, value)
 		}); err != nil {
 			return nil, err
 		}
@@ -73,7 +130,7 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 		}
 		document.Data = []*Resource{}
 
-		values := reflect.ValueOf(v).Elem()
+		values := rValue.Elem()
 		for i := 0; i < values.Len(); i++ {
 			value := values.Index(i)
 			if value.Kind() != reflect.Ptr {
@@ -105,7 +162,7 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 					return nil
 				}
 
-				return marshal(r, memberType, memberNames, value)
+				return marshal(&document.document, r, memberType, memberNames, value)
 			}); err != nil {
 				return nil, err
 			}
@@ -124,7 +181,7 @@ type marshalerFunc = func(map[string]interface{}, string, reflect.Value)
 
 var customMarshalers = make(map[reflect.Type]marshalerFunc)
 
-func marshal(resource *Resource, memberType MemberType, memberNames []string, value reflect.Value) error {
+func marshal(document *document, resource *Resource, memberType MemberType, memberNames []string, value reflect.Value) error {
 	// figure out search
 	var search map[string]interface{}
 	switch memberType {
@@ -132,6 +189,9 @@ func marshal(resource *Resource, memberType MemberType, memberNames []string, va
 		search = resource.Attributes
 	case MemberTypeMeta:
 		search = resource.Meta
+	case MemberTypeRelationship:
+		search = resource.Attributes
+		fmt.Println("HERE!!!", document.Included)
 	}
 
 	// iterate memberNames

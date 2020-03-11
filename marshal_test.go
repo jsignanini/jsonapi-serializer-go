@@ -1558,3 +1558,77 @@ func TestMarshalFloat64Ptr(t *testing.T) {
 		}
 	}
 }
+
+func TestMarshalRelationship(t *testing.T) {
+	type Bar struct {
+		ID    string `jsonapi:"primary,bars"`
+		Hello string `jsonapi:"attribute,hello"`
+	}
+	type TestRelationship struct {
+		ID      string `jsonapi:"primary,test_relationships"`
+		Foo     string `jsonapi:"attribute,foo"`
+		Bar     *Bar   `jsonapi:"relationship,bar"`
+		Another *Bar   `jsonapi:"relationship,another"`
+	}
+	test := TestRelationship{
+		ID:  "someID",
+		Foo: "bar",
+		Bar: &Bar{
+			ID:    "barID",
+			Hello: "world!",
+		},
+		Another: &Bar{
+			ID:    "barID2",
+			Hello: "world2!",
+		},
+	}
+	expected := []byte(`{
+	"data": {
+		"id": "someID",
+		"type": "test_relationships",
+		"attributes": {
+			"foo": "bar"
+		},
+		"relationships": {
+			"another": {
+				"data": {
+					"id": "barID2",
+					"type": "bars"
+				}
+			},
+			"bar": {
+				"data": {
+					"id": "barID",
+					"type": "bars"
+				}
+			}
+		}
+	},
+	"jsonapi": {
+		"version": "1.0"
+	},
+	"included": [
+		{
+			"id": "barID",
+			"type": "bars",
+			"attributes": {
+				"hello": "world!"
+			}
+		},
+		{
+			"id": "barID2",
+			"type": "bars",
+			"attributes": {
+				"hello": "world2!"
+			}
+		}
+	]
+}`)
+	if got, err := Marshal(&test, nil); err != nil {
+		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(got, expected) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(expected), string(got))
+		}
+	}
+}
