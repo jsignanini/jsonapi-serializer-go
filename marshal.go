@@ -45,13 +45,10 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 				}
 				return nil
 			}
-
 			if memberType == MemberTypeLinks {
-				links, ok := value.Interface().(Links)
-				if !ok {
-					return fmt.Errorf("field tagged as link needs to be of Links type")
+				if err := document.Data.SetLinks(value); err != nil {
+					return err
 				}
-				document.Data.Links = links
 				return nil
 			}
 			if memberType == MemberTypeRelationship {
@@ -75,11 +72,9 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 					}
 
 					if memberType == MemberTypeLinks {
-						links, ok := v2.Interface().(Links)
-						if !ok {
-							return fmt.Errorf("field tagged as link needs to be of Links type")
+						if err := newIncl.SetLinks(v2); err != nil {
+							return err
 						}
-						newIncl.Links = links
 						return nil
 					}
 
@@ -134,11 +129,9 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 				}
 
 				if memberType == MemberTypeLinks {
-					links, ok := value.Interface().(Links)
-					if !ok {
-						return fmt.Errorf("field tagged as link needs to be of Links type")
+					if err := r.SetLinks(value); err != nil {
+						return err
 					}
-					r.Links = links
 					return nil
 				}
 

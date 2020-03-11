@@ -38,3 +38,12 @@ func (r *Resource) SetIDAndType(idValue reflect.Value, resourceType string) erro
 	r.Type = resourceType
 	return nil
 }
+
+func (r *Resource) SetLinks(linksValue reflect.Value) error {
+	links, ok := linksValue.Interface().(Links)
+	if !ok {
+		return fmt.Errorf("field tagged as link needs to be of jsonapi.Links type")
+	}
+	r.Links = links
+	return nil
+}
