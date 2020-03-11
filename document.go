@@ -1,11 +1,11 @@
 package jsonapi
 
 type document struct {
-	JSONAPI *JSONAPIInformation `json:"jsonapi,omitempty"`
-	Meta    *Meta               `json:"meta,omitempty"`
-	Links   *Links              `json:"links,omitempty"`
-	Errors  []Error             `json:"errors,omitempty"`
-	// Included
+	JSONAPI  *JSONAPIInformation `json:"jsonapi,omitempty"`
+	Meta     *Meta               `json:"meta,omitempty"`
+	Links    *Links              `json:"links,omitempty"`
+	Errors   []Error             `json:"errors,omitempty"`
+	Included []*Resource         `json:"included,omitempty"`
 }
 
 type Document struct {

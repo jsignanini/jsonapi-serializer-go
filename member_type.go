@@ -9,10 +9,11 @@ import (
 type MemberType string
 
 const (
-	MemberTypeAttribute MemberType = "attribute"
-	MemberTypeLinks     MemberType = "links"
-	MemberTypeMeta      MemberType = "meta"
-	MemberTypePrimary   MemberType = "primary"
+	MemberTypeAttribute    MemberType = "attribute"
+	MemberTypeLinks        MemberType = "links"
+	MemberTypeMeta         MemberType = "meta"
+	MemberTypePrimary      MemberType = "primary"
+	MemberTypeRelationship MemberType = "relationship"
 )
 
 func NewMemberType(s string) (MemberType, error) {
@@ -25,6 +26,8 @@ func NewMemberType(s string) (MemberType, error) {
 		return MemberTypeMeta, nil
 	case "primary":
 		return MemberTypePrimary, nil
+	case "relationship":
+		return MemberTypeRelationship, nil
 	default:
 		return "", fmt.Errorf("MemberType '%s' not found.", s)
 	}

@@ -12,13 +12,18 @@ type MarshalParams struct {
 }
 
 func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
-	kind := reflect.TypeOf(v).Kind()
+	rType := reflect.TypeOf(v)
+	rValue := reflect.ValueOf(v)
+
+	// only allow pointer or slice kind
+	kind := rType.Kind()
 	if kind != reflect.Ptr && kind != reflect.Slice {
 		return nil, fmt.Errorf("v should be pointer or slice")
 	}
 
+	// check if it's a slice
 	isSlice := false
-	if reflect.TypeOf(v).Elem().Kind() == reflect.Slice {
+	if rType.Elem().Kind() == reflect.Slice {
 		isSlice = true
 	}
 
@@ -34,30 +39,47 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 
 		document.Data = NewResource()
 		if err := iterateStruct(v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
-			kind := value.Kind()
+			switch memberType {
+			case MemberTypePrimary:
+				return document.Data.SetIDAndType(value, memberNames[0])
+			case MemberTypeLinks:
+				return document.Data.SetLinks(value)
+			case MemberTypeRelationship:
+				if document.Data.Relationships == nil {
+					document.Data.Relationships = Relationships{}
+				}
+				rel := NewRelationship()
+				document.Data.Relationships[memberNames[0]] = rel
 
-			if memberType == MemberTypePrimary {
-				if kind != reflect.String {
-					return fmt.Errorf("ID must be a string")
+				// iterate relationship
+				newIncl := NewResource()
+				if err := iterateStruct(value.Interface(), func(v2 reflect.Value, memberType MemberType, memberNames ...string) error {
+					switch memberType {
+					case MemberTypePrimary:
+						if err := rel.Data.SetIDAndType(v2, memberNames[0]); err != nil {
+							return err
+						}
+						return newIncl.SetIDAndType(v2, memberNames[0])
+					case MemberTypeLinks:
+						return newIncl.SetLinks(v2)
+					default:
+						return marshal(newIncl, memberType, memberNames, v2)
+					}
+				}); err != nil {
+					return err
 				}
-				id, _ := value.Interface().(string)
-				if id == "" {
-					return nil
+				// make sure it's only added once
+				for _, incl := range document.Included {
+					if incl.Type == newIncl.Type && incl.ID == newIncl.ID {
+						return nil
+					}
 				}
-				document.Data.ID = id
-				document.Data.Type = memberNames[0]
-				return nil
-			}
-			if memberType == MemberTypeLinks {
-				links, ok := value.Interface().(Links)
-				if !ok {
-					return fmt.Errorf("field tagged as link needs to be of Links type")
-				}
-				document.Data.Links = links
-				return nil
-			}
+				document.Included = append(document.Included, newIncl)
 
-			return marshal(document.Data, memberType, memberNames, value)
+				return nil
+			default:
+				return marshal(document.Data, memberType, memberNames, value)
+			}
 		}); err != nil {
 			return nil, err
 		}
@@ -73,7 +95,7 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 		}
 		document.Data = []*Resource{}
 
-		values := reflect.ValueOf(v).Elem()
+		values := rValue.Elem()
 		for i := 0; i < values.Len(); i++ {
 			value := values.Index(i)
 			if value.Kind() != reflect.Ptr {
@@ -82,30 +104,14 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 
 			r := NewResource()
 			if err := iterateStruct(value.Interface(), func(value reflect.Value, memberType MemberType, memberNames ...string) error {
-				kind := value.Kind()
-
-				if memberType == MemberTypePrimary {
-					if kind != reflect.String {
-						return fmt.Errorf("ID must be a string")
-					}
-					id, _ := value.Interface().(string)
-					if id == "" {
-						return nil
-					}
-					r.ID = id
-					r.Type = memberNames[0]
-					return nil
+				switch memberType {
+				case MemberTypePrimary:
+					return r.SetIDAndType(value, memberNames[0])
+				case MemberTypeLinks:
+					return r.SetLinks(value)
+				default:
+					return marshal(r, memberType, memberNames, value)
 				}
-				if memberType == MemberTypeLinks {
-					links, ok := value.Interface().(Links)
-					if !ok {
-						return fmt.Errorf("field tagged as link needs to be of Links type")
-					}
-					r.Links = links
-					return nil
-				}
-
-				return marshal(r, memberType, memberNames, value)
 			}); err != nil {
 				return nil, err
 			}

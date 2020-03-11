@@ -1,6 +1,8 @@
 package jsonapi
 
-import "reflect"
+import (
+	"reflect"
+)
 
 type iterFunc func(reflect.Value, MemberType, ...string) error
 
