@@ -39,19 +39,12 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 
 		document.Data = NewResource()
 		if err := iterateStruct(v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
-			if memberType == MemberTypePrimary {
-				if err := document.Data.SetIDAndType(value, memberNames[0]); err != nil {
-					return err
-				}
-				return nil
-			}
-			if memberType == MemberTypeLinks {
-				if err := document.Data.SetLinks(value); err != nil {
-					return err
-				}
-				return nil
-			}
-			if memberType == MemberTypeRelationship {
+			switch memberType {
+			case MemberTypePrimary:
+				return document.Data.SetIDAndType(value, memberNames[0])
+			case MemberTypeLinks:
+				return document.Data.SetLinks(value)
+			case MemberTypeRelationship:
 				if document.Data.Relationships == nil {
 					document.Data.Relationships = Relationships{}
 				}
@@ -61,27 +54,17 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 				// iterate relationship
 				newIncl := NewResource()
 				if err := iterateStruct(value.Interface(), func(v2 reflect.Value, memberType MemberType, memberNames ...string) error {
-					if memberType == MemberTypePrimary {
+					switch memberType {
+					case MemberTypePrimary:
 						if err := rel.Data.SetIDAndType(v2, memberNames[0]); err != nil {
 							return err
 						}
-						if err := newIncl.SetIDAndType(v2, memberNames[0]); err != nil {
-							return err
-						}
-						return nil
+						return newIncl.SetIDAndType(v2, memberNames[0])
+					case MemberTypeLinks:
+						return newIncl.SetLinks(v2)
+					default:
+						return marshal(&document.document, newIncl, memberType, memberNames, v2)
 					}
-
-					if memberType == MemberTypeLinks {
-						if err := newIncl.SetLinks(v2); err != nil {
-							return err
-						}
-						return nil
-					}
-
-					if err := marshal(&document.document, newIncl, memberType, memberNames, v2); err != nil {
-						return err
-					}
-					return nil
 				}); err != nil {
 					return err
 				}
@@ -94,9 +77,9 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 				document.Included = append(document.Included, newIncl)
 
 				return nil
+			default:
+				return marshal(&document.document, document.Data, memberType, memberNames, value)
 			}
-
-			return marshal(&document.document, document.Data, memberType, memberNames, value)
 		}); err != nil {
 			return nil, err
 		}
@@ -121,21 +104,14 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 
 			r := NewResource()
 			if err := iterateStruct(value.Interface(), func(value reflect.Value, memberType MemberType, memberNames ...string) error {
-				if memberType == MemberTypePrimary {
-					if err := r.SetIDAndType(value, memberNames[0]); err != nil {
-						return err
-					}
-					return nil
+				switch memberType {
+				case MemberTypePrimary:
+					return r.SetIDAndType(value, memberNames[0])
+				case MemberTypeLinks:
+					return r.SetLinks(value)
+				default:
+					return marshal(&document.document, r, memberType, memberNames, value)
 				}
-
-				if memberType == MemberTypeLinks {
-					if err := r.SetLinks(value); err != nil {
-						return err
-					}
-					return nil
-				}
-
-				return marshal(&document.document, r, memberType, memberNames, value)
 			}); err != nil {
 				return nil, err
 			}
