@@ -14,29 +14,13 @@ func TestMarshal(t *testing.T) {
 		String:     "someString",
 		MetaString: "bar",
 	}
-	RegisterMarshaler(reflect.TypeOf(&CustomNullableString{}), func(s map[string]interface{}, memberName string, value reflect.Value) {
-		if value.IsNil() {
-			return
-		}
-		cns := value.Interface().(*CustomNullableString)
-		if !cns.Valid {
-			s[memberName] = nil
-			return
-		}
-		s[memberName] = cns.String
-	})
-
 	input := []byte(`{
 	"data": {
 		"id": "someID",
 		"type": "samples",
 		"attributes": {
-			"embedded_string": "",
 			"float64": 3.14159265359,
 			"int": 99,
-			"nested": {
-				"nested_string": ""
-			},
 			"string": "someString"
 		},
 		"meta": {

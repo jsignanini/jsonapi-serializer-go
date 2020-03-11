@@ -39,20 +39,13 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 
 		document.Data = NewResource()
 		if err := iterateStruct(v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
-			kind := value.Kind()
-
 			if memberType == MemberTypePrimary {
-				if kind != reflect.String {
-					return fmt.Errorf("ID must be a string")
+				if err := document.Data.SetIDAndType(value, memberNames[0]); err != nil {
+					return err
 				}
-				id, _ := value.Interface().(string)
-				if id == "" {
-					return nil
-				}
-				document.Data.ID = id
-				document.Data.Type = memberNames[0]
 				return nil
 			}
+
 			if memberType == MemberTypeLinks {
 				links, ok := value.Interface().(Links)
 				if !ok {
@@ -71,22 +64,16 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 				// iterate relationship
 				newIncl := NewResource()
 				if err := iterateStruct(value.Interface(), func(v2 reflect.Value, memberType MemberType, memberNames ...string) error {
-					kind := v2.Kind()
-
 					if memberType == MemberTypePrimary {
-						if kind != reflect.String {
-							return fmt.Errorf("ID must be a string")
+						if err := rel.Data.SetIDAndType(v2, memberNames[0]); err != nil {
+							return err
 						}
-						id, _ := v2.Interface().(string)
-						if id == "" {
-							return nil
+						if err := newIncl.SetIDAndType(v2, memberNames[0]); err != nil {
+							return err
 						}
-						rel.Data.ID = id
-						newIncl.ID = id
-						rel.Data.Type = memberNames[0]
-						newIncl.Type = memberNames[0]
 						return nil
 					}
+
 					if memberType == MemberTypeLinks {
 						links, ok := v2.Interface().(Links)
 						if !ok {
@@ -139,20 +126,13 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 
 			r := NewResource()
 			if err := iterateStruct(value.Interface(), func(value reflect.Value, memberType MemberType, memberNames ...string) error {
-				kind := value.Kind()
-
 				if memberType == MemberTypePrimary {
-					if kind != reflect.String {
-						return fmt.Errorf("ID must be a string")
+					if err := r.SetIDAndType(value, memberNames[0]); err != nil {
+						return err
 					}
-					id, _ := value.Interface().(string)
-					if id == "" {
-						return nil
-					}
-					r.ID = id
-					r.Type = memberNames[0]
 					return nil
 				}
+
 				if memberType == MemberTypeLinks {
 					links, ok := value.Interface().(Links)
 					if !ok {
