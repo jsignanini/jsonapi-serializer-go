@@ -27,7 +27,6 @@ func NewResource() *Resource {
 func (r *Resource) SetIDAndType(idValue reflect.Value, resourceType string) error {
 	kind := idValue.Kind()
 	if kind != reflect.String {
-		fmt.Println("here")
 		return fmt.Errorf("ID must be a string, got %s", kind)
 	}
 	id, _ := idValue.Interface().(string)

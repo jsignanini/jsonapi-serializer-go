@@ -63,7 +63,7 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 					case MemberTypeLinks:
 						return newIncl.SetLinks(v2)
 					default:
-						return marshal(&document.document, newIncl, memberType, memberNames, v2)
+						return marshal(newIncl, memberType, memberNames, v2)
 					}
 				}); err != nil {
 					return err
@@ -78,7 +78,7 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 
 				return nil
 			default:
-				return marshal(&document.document, document.Data, memberType, memberNames, value)
+				return marshal(document.Data, memberType, memberNames, value)
 			}
 		}); err != nil {
 			return nil, err
@@ -110,7 +110,7 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 				case MemberTypeLinks:
 					return r.SetLinks(value)
 				default:
-					return marshal(&document.document, r, memberType, memberNames, value)
+					return marshal(r, memberType, memberNames, value)
 				}
 			}); err != nil {
 				return nil, err
@@ -130,7 +130,7 @@ type marshalerFunc = func(map[string]interface{}, string, reflect.Value)
 
 var customMarshalers = make(map[reflect.Type]marshalerFunc)
 
-func marshal(document *document, resource *Resource, memberType MemberType, memberNames []string, value reflect.Value) error {
+func marshal(resource *Resource, memberType MemberType, memberNames []string, value reflect.Value) error {
 	// figure out search
 	var search map[string]interface{}
 	switch memberType {
@@ -138,9 +138,6 @@ func marshal(document *document, resource *Resource, memberType MemberType, memb
 		search = resource.Attributes
 	case MemberTypeMeta:
 		search = resource.Meta
-	case MemberTypeRelationship:
-		search = resource.Attributes
-		fmt.Println("HERE!!!", document.Included)
 	}
 
 	// iterate memberNames
