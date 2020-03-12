@@ -48,33 +48,76 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 				if document.Data.Relationships == nil {
 					document.Data.Relationships = Relationships{}
 				}
-				rel := NewRelationship()
-				document.Data.Relationships[memberNames[0]] = rel
+
+				relIsSlice := false
+				if value.Kind() == reflect.Slice {
+					relIsSlice = true
+				}
 
 				// iterate relationship
-				newIncl := NewResource()
-				if err := iterateStruct(value.Interface(), func(v2 reflect.Value, memberType MemberType, memberNames ...string) error {
-					switch memberType {
-					case MemberTypePrimary:
-						if err := rel.Data.SetIDAndType(v2, memberNames[0]); err != nil {
+				if !relIsSlice {
+					rel := NewRelationship()
+					document.Data.Relationships[memberNames[0]] = rel
+					newIncl := NewResource()
+					if err := iterateStruct(value.Interface(), func(v2 reflect.Value, memberType MemberType, memberNames ...string) error {
+						switch memberType {
+						case MemberTypePrimary:
+							if err := rel.Data.SetIDAndType(v2, memberNames[0]); err != nil {
+								return err
+							}
+							return newIncl.SetIDAndType(v2, memberNames[0])
+						case MemberTypeLinks:
+							return newIncl.SetLinks(v2)
+						default:
+							return marshal(newIncl, memberType, memberNames, v2)
+						}
+					}); err != nil {
+						return err
+					}
+					// make sure it's only added once
+					for _, incl := range document.Included {
+						if incl.Type == newIncl.Type && incl.ID == newIncl.ID {
+							return nil
+						}
+					}
+					document.Included = append(document.Included, newIncl)
+				} else {
+					rel := NewCompoundRelationship()
+					document.Data.Relationships[memberNames[0]] = rel
+					newRels := []*Relationship{}
+					for i := 0; i < value.Len(); i++ {
+						sValue := value.Index(i)
+						if sValue.Kind() != reflect.Ptr {
+							return fmt.Errorf("v should be pointer or slice of pointers")
+						}
+						newIncl := NewResource()
+						newRel := NewRelationship()
+						if err := iterateStruct(sValue.Interface(), func(v2 reflect.Value, memberType MemberType, memberNames ...string) error {
+							switch memberType {
+							case MemberTypePrimary:
+								if err := newRel.Data.SetIDAndType(v2, memberNames[0]); err != nil {
+									return err
+								}
+								return newIncl.SetIDAndType(v2, memberNames[0])
+							case MemberTypeLinks:
+								return newIncl.SetLinks(v2)
+							default:
+								return marshal(newIncl, memberType, memberNames, v2)
+							}
+						}); err != nil {
 							return err
 						}
-						return newIncl.SetIDAndType(v2, memberNames[0])
-					case MemberTypeLinks:
-						return newIncl.SetLinks(v2)
-					default:
-						return marshal(newIncl, memberType, memberNames, v2)
+						// make sure it's only added once
+						for _, incl := range document.Included {
+							if incl.Type == newIncl.Type && incl.ID == newIncl.ID {
+								return nil
+							}
+						}
+						document.Included = append(document.Included, newIncl)
+						newRels = append(newRels, newRel)
 					}
-				}); err != nil {
-					return err
+					document.Data.Relationships[memberNames[0]] = newRels
 				}
-				// make sure it's only added once
-				for _, incl := range document.Included {
-					if incl.Type == newIncl.Type && incl.ID == newIncl.ID {
-						return nil
-					}
-				}
-				document.Included = append(document.Included, newIncl)
 
 				return nil
 			default:
