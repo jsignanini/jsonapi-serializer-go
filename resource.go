@@ -33,6 +33,9 @@ func (r *Resource) SetIDAndType(idValue reflect.Value, resourceType string) erro
 	if id == "" {
 		return fmt.Errorf("ID must be set")
 	}
+	if resourceType == "" {
+		return fmt.Errorf("type must be set")
+	}
 	r.ID = id
 	r.Type = resourceType
 	return nil
