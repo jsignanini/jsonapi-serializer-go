@@ -1,0 +1,55 @@
+        {
+        	"data": {
+        		"id": "someID",
+        		"type": "test_relationships",
+        		"attributes": {
+        			"foo": "bar"
+        		},
+        		"relationships": {
+        			"another": {
+        				"data": {
+        					"id": "barID2",
+        					"type": "bars"
+        				}
+        			},
+        			"bars": {
+        				"data": [
+        					{
+        						"id": "barID1.1",
+        						"type": "bars"
+        					},
+        					{
+        						"id": "barID1.2",
+        						"type": "bars"
+        					}
+        				]
+        			}
+        		}
+        	},
+        	"jsonapi": {
+        		"version": "1.0"
+        	},
+        	"included": [
+        		{
+        			"id": "barID1.1",
+        			"type": "bars",
+        			"attributes": {
+        				"hello": "world1.1!"
+        			}
+        		},
+        		{
+        			"id": "barID1.2",
+        			"type": "bars",
+        			"attributes": {
+        				"hello": "world1.2!"
+        			}
+        		},
+        		{
+        			"id": "barID2",
+        			"type": "bars",
+        			"attributes": {
+        				"hello": "world2!"
+        			}
+        		}
+        	]
+        }

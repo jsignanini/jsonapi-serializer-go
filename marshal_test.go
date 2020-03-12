@@ -1660,20 +1660,18 @@ func TestMarshalRelationshipArray(t *testing.T) {
 					"type": "bars"
 				}
 			},
-			"bars": [
-				{
-					"data": {
+			"bars": {
+				"data": [
+					{
 						"id": "barID1.1",
 						"type": "bars"
-					}
-				},
-				{
-					"data": {
+					},
+					{
 						"id": "barID1.2",
 						"type": "bars"
 					}
-				}
-			]
+				]
+			}
 		}
 	},
 	"jsonapi": {

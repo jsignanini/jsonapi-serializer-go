@@ -84,7 +84,6 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 				} else {
 					rel := NewCompoundRelationship()
 					document.Data.Relationships[memberNames[0]] = rel
-					newRels := []*Relationship{}
 					for i := 0; i < value.Len(); i++ {
 						sValue := value.Index(i)
 						if sValue.Kind() != reflect.Ptr {
@@ -114,9 +113,8 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 							}
 						}
 						document.Included = append(document.Included, newIncl)
-						newRels = append(newRels, newRel)
+						rel.Data = append(rel.Data, newRel.Data)
 					}
-					document.Data.Relationships[memberNames[0]] = newRels
 				}
 
 				return nil
