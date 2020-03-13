@@ -18,7 +18,7 @@ type Relationship struct {
 }
 
 type CompoundRelationship struct {
-	Data []*Resource `json:"data,omitempty"`
+	Data []*Resource `json:"data"`
 	relationship
 }
 
