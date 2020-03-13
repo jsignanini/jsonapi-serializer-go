@@ -14,7 +14,7 @@ type Document struct {
 }
 
 type CompoundDocument struct {
-	Data []*Resource `json:"data,omitempty"`
+	Data []*Resource `json:"data"`
 	document
 }
 
