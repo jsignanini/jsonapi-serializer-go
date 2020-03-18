@@ -23,9 +23,7 @@ type CompoundRelationship struct {
 }
 
 func NewRelationship() *Relationship {
-	// r := NewResource()
 	return &Relationship{
-		// Data:         r,
 		relationship: relationship{
 			// Links: &RelationshipLink{},
 			// Meta:  &Meta{},
