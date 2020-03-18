@@ -12,7 +12,9 @@ func iterateStruct(iface interface{}, iter iterFunc, memberNames ...string) erro
 	values := reflect.ValueOf(iface)
 
 	var numField int
-	if fields.Kind() == reflect.Ptr {
+	if fields.Kind() == reflect.Ptr && values.IsNil() {
+		return nil
+	} else if fields.Kind() == reflect.Ptr {
 		numField = values.Elem().NumField()
 	} else {
 		numField = values.NumField()

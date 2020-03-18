@@ -13,7 +13,7 @@ type relationship struct {
 }
 
 type Relationship struct {
-	Data *Resource `json:"data,omitempty"`
+	Data *Resource `json:"data"`
 	relationship
 }
 
@@ -23,14 +23,16 @@ type CompoundRelationship struct {
 }
 
 func NewRelationship() *Relationship {
-	r := NewResource()
 	return &Relationship{
-		Data:         r,
 		relationship: relationship{
 			// Links: &RelationshipLink{},
 			// Meta:  &Meta{},
 		},
 	}
+}
+
+func (r *Relationship) AddResource(resource *Resource) {
+	r.Data = resource
 }
 
 func NewCompoundRelationship() *CompoundRelationship {

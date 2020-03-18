@@ -58,7 +58,11 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 				if !relIsSlice {
 					rel := NewRelationship()
 					document.Data.Relationships[memberNames[0]] = rel
+					if value.IsNil() {
+						return nil
+					}
 					newIncl := NewResource()
+					rel.AddResource(NewResource())
 					if err := iterateStruct(value.Interface(), func(v2 reflect.Value, memberType MemberType, memberNames ...string) error {
 						switch memberType {
 						case MemberTypePrimary:
@@ -91,6 +95,7 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 						}
 						newIncl := NewResource()
 						newRel := NewRelationship()
+						newRel.AddResource(NewResource())
 						if err := iterateStruct(sValue.Interface(), func(v2 reflect.Value, memberType MemberType, memberNames ...string) error {
 							switch memberType {
 							case MemberTypePrimary:

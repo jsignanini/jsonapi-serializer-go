@@ -8,7 +8,7 @@ import (
 type Resource struct {
 	// Exception: The id member is not required when the resource object originates at the client and represents a new resource to be created on the server.
 	ID   string `json:"id,omitempty"`
-	Type string `json:"type"`
+	Type string `json:"type,omitempty"`
 
 	Attributes    Attributes    `json:"attributes,omitempty"`
 	Relationships Relationships `json:"relationships,omitempty"`
