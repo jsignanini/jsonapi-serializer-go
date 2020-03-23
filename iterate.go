@@ -1,49 +1,57 @@
 package jsonapi
 
 import (
+	"fmt"
 	"reflect"
 )
 
 type iterFunc func(reflect.Value, MemberType, ...string) error
 
-func iterateStruct(iface interface{}, iter iterFunc, memberNames ...string) error {
-	// TODO check iface is a struct
-	fields := reflect.TypeOf(iface)
-	values := reflect.ValueOf(iface)
+func iterateStruct(v interface{}, iter iterFunc, memberNames ...string) error {
+	rType := reflect.TypeOf(v)
+	rValue := reflect.ValueOf(v)
 
-	var numField int
-	if fields.Kind() == reflect.Ptr && values.IsNil() {
-		return nil
-	} else if fields.Kind() == reflect.Ptr {
-		numField = values.Elem().NumField()
-	} else {
-		numField = values.NumField()
+	// check v is a pointer
+	if rType.Kind() != reflect.Ptr {
+		return fmt.Errorf("v must be a pointer")
 	}
 
-	for i := 0; i < numField; i++ {
-		field := fields.Elem().Field(i)
-		value := values.Elem().Field(i)
-		kind := value.Kind()
+	// skip nil pointers
+	if rValue.IsNil() {
+		return nil
+	}
+
+	// check *v is a struct
+	if rValue.Elem().Kind() != reflect.Struct {
+		return fmt.Errorf("v must be a pointer to a struct")
+	}
+
+	// iterate struct fields
+	numFields := rValue.Elem().NumField()
+	for i := 0; i < numFields; i++ {
+		fType := rType.Elem().Field(i)
+		fValue := rValue.Elem().Field(i)
+		kind := fValue.Kind()
 
 		// if struct and embedded (anonymus), restart loop
-		if kind == reflect.Struct && field.Anonymous {
-			iterateStruct(value.Addr().Interface(), iter, memberNames...)
+		if kind == reflect.Struct && fType.Anonymous {
+			iterateStruct(fValue.Addr().Interface(), iter, memberNames...)
 			continue
 		}
 
 		// get member info, continue otherwise
-		memberType, memberName, err := getMember(field)
+		memberType, memberName, err := getMember(fType)
 		if err != nil {
 			continue
 		}
 
 		// handle nested structs
 		if kind == reflect.Struct {
-			iterateStruct(value.Addr().Interface(), iter, append(memberNames, memberName)...)
+			iterateStruct(fValue.Addr().Interface(), iter, append(memberNames, memberName)...)
 			continue
 		}
 
-		if err := iter(value, memberType, append(memberNames, memberName)...); err != nil {
+		if err := iter(fValue, memberType, append(memberNames, memberName)...); err != nil {
 			return err
 		}
 	}
