@@ -3,7 +3,7 @@ package jsonapi
 import "encoding/json"
 
 func MarshalErrors(p *MarshalParams, errs ...Error) ([]byte, error) {
-	document := NewDocument()
+	document := NewDocument(&NewDocumentParams{})
 	document.Errors = errs
 
 	// handle optional params

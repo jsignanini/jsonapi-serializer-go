@@ -29,13 +29,12 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 
 	if !isSlice {
 		// handle optional params
-		document := NewDocument()
-		if p != nil && p.Links != nil {
-			document.Links = p.Links
+		ndp := &NewDocumentParams{}
+		if p != nil {
+			ndp.Links = p.Links
+			ndp.Meta = p.Meta
 		}
-		if p != nil && p.Meta != nil {
-			document.Meta = p.Meta
-		}
+		document := NewDocument(ndp)
 
 		document.Data = NewResource()
 		if err := iterateStruct(v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
@@ -132,14 +131,13 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 
 		return json.MarshalIndent(&document, jsonPrefix, jsonIndent)
 	} else {
-		document := NewCompoundDocument()
-		if p != nil && p.Links != nil {
-			document.Links = p.Links
+		// handle optional params
+		ncdp := &NewCompoundDocumentParams{}
+		if p != nil {
+			ncdp.Links = p.Links
+			ncdp.Meta = p.Meta
 		}
-		if p != nil && p.Meta != nil {
-			document.Meta = p.Meta
-		}
-		document.Data = []*Resource{}
+		document := NewCompoundDocument(ncdp)
 
 		values := rValue.Elem()
 		for i := 0; i < values.Len(); i++ {

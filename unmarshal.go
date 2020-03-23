@@ -39,7 +39,7 @@ func Unmarshal(data []byte, v interface{}) error {
 	}
 
 	if !isSlice {
-		document := NewDocument()
+		document := NewDocument(&NewDocumentParams{})
 		if err := json.Unmarshal(data, document); err != nil {
 			return err
 		}
@@ -61,7 +61,7 @@ func Unmarshal(data []byte, v interface{}) error {
 			return err
 		}
 	} else {
-		document := NewCompoundDocument()
+		document := NewCompoundDocument(&NewCompoundDocumentParams{})
 		if err := json.Unmarshal(data, document); err != nil {
 			return err
 		}
