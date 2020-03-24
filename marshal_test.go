@@ -460,6 +460,217 @@ func TestMarshalCompound(t *testing.T) {
 	}
 }
 
+func TestMarshalCompoundWithRelationships(t *testing.T) {
+	type Author struct {
+		ID   string `jsonapi:"primary,authors"`
+		Name string `jsonapi:"attribute,name"`
+	}
+	type Article struct {
+		ID     string  `jsonapi:"primary,articles"`
+		Title  string  `jsonapi:"attribute,title"`
+		Author *Author `jsonapi:"relationship,author"`
+	}
+	articles := []*Article{
+		{
+			ID:    "article-1",
+			Title: "Hello world 1!",
+			Author: &Author{
+				ID:   "author-1",
+				Name: "John",
+			},
+		},
+		{
+			ID:    "article-2",
+			Title: "Hello world 2!",
+			Author: &Author{
+				ID:   "author-2",
+				Name: "Juan",
+			},
+		},
+	}
+	expected := []byte(`{
+	"data": [
+		{
+			"id": "article-1",
+			"type": "articles",
+			"attributes": {
+				"title": "Hello world 1!"
+			},
+			"relationships": {
+				"author": {
+					"data": {
+						"id": "author-1",
+						"type": "authors"
+					}
+				}
+			}
+		},
+		{
+			"id": "article-2",
+			"type": "articles",
+			"attributes": {
+				"title": "Hello world 2!"
+			},
+			"relationships": {
+				"author": {
+					"data": {
+						"id": "author-2",
+						"type": "authors"
+					}
+				}
+			}
+		}
+	],
+	"jsonapi": {
+		"version": "1.0"
+	},
+	"included": [
+		{
+			"id": "author-1",
+			"type": "authors",
+			"attributes": {
+				"name": "John"
+			}
+		},
+		{
+			"id": "author-2",
+			"type": "authors",
+			"attributes": {
+				"name": "Juan"
+			}
+		}
+	]
+}`)
+	if b, err := Marshal(&articles, nil); err != nil {
+		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(expected, b) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(expected), string(b))
+		}
+	}
+}
+
+func TestMarshalCompoundWithCompoundRelationships(t *testing.T) {
+	type Author struct {
+		ID   string `jsonapi:"primary,authors"`
+		Name string `jsonapi:"attribute,name"`
+	}
+	type Article struct {
+		ID      string    `jsonapi:"primary,articles"`
+		Title   string    `jsonapi:"attribute,title"`
+		Authors []*Author `jsonapi:"relationship,authors"`
+	}
+	articles := []*Article{
+		{
+			ID:    "article-1",
+			Title: "Hello world 1!",
+			Authors: []*Author{
+				&Author{
+					ID:   "author-1",
+					Name: "John",
+				},
+				&Author{
+					ID:   "author-3",
+					Name: "Fred",
+				},
+			},
+		},
+		{
+			ID:    "article-2",
+			Title: "Hello world 2!",
+			Authors: []*Author{
+				&Author{
+					ID:   "author-2",
+					Name: "Juan",
+				},
+				&Author{
+					ID:   "author-3",
+					Name: "Fred",
+				},
+			},
+		},
+	}
+	expected := []byte(`{
+	"data": [
+		{
+			"id": "article-1",
+			"type": "articles",
+			"attributes": {
+				"title": "Hello world 1!"
+			},
+			"relationships": {
+				"authors": {
+					"data": [
+						{
+							"id": "author-1",
+							"type": "authors"
+						},
+						{
+							"id": "author-3",
+							"type": "authors"
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "article-2",
+			"type": "articles",
+			"attributes": {
+				"title": "Hello world 2!"
+			},
+			"relationships": {
+				"authors": {
+					"data": [
+						{
+							"id": "author-2",
+							"type": "authors"
+						},
+						{
+							"id": "author-3",
+							"type": "authors"
+						}
+					]
+				}
+			}
+		}
+	],
+	"jsonapi": {
+		"version": "1.0"
+	},
+	"included": [
+		{
+			"id": "author-1",
+			"type": "authors",
+			"attributes": {
+				"name": "John"
+			}
+		},
+		{
+			"id": "author-3",
+			"type": "authors",
+			"attributes": {
+				"name": "Fred"
+			}
+		},
+		{
+			"id": "author-2",
+			"type": "authors",
+			"attributes": {
+				"name": "Juan"
+			}
+		}
+	]
+}`)
+	if b, err := Marshal(&articles, nil); err != nil {
+		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(expected, b) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(expected), string(b))
+		}
+	}
+}
+
 func TestMarshalString(t *testing.T) {
 	type TestString struct {
 		ID  string `jsonapi:"primary,test_strings"`
