@@ -193,13 +193,16 @@ func marshalCompoundRelationship(value reflect.Value, d *document, r *Resource, 
 		}); err != nil {
 			return err
 		}
-		// make sure it's only added once
+		// make sure it's only added once to included
+		existsInIncluded := false
 		for _, incl := range d.Included {
 			if incl.Type == newIncl.Type && incl.ID == newIncl.ID {
-				return nil
+				existsInIncluded = true
 			}
 		}
-		d.Included = append(d.Included, newIncl)
+		if !existsInIncluded {
+			d.Included = append(d.Included, newIncl)
+		}
 		rels.Data = append(rels.Data, newRel.Data)
 	}
 	return nil
