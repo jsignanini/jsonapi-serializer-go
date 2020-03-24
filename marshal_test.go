@@ -323,12 +323,11 @@ func TestMarshalCustomTypePtr(t *testing.T) {
 		},
 	}
 	noRegisteredCustomMarshalerError := fmt.Sprintf("type: %+v, not supported, must implement custom marshaller", reflect.ValueOf(&Author{}).Type())
-	if b, err := Marshal(&t5, nil); err != nil {
+	if _, err := Marshal(&t5, nil); err != nil {
 		if err.Error() != noRegisteredCustomMarshalerError {
 			t.Errorf("marshal must error out if custom struct has no custom marshaler with message: %s, got: %s", noRegisteredCustomMarshalerError, err.Error())
 		}
 	} else {
-		fmt.Println(string(b))
 		t.Errorf("marshal must error out if custom struct has no custom marshaler registered, got no error")
 	}
 }
