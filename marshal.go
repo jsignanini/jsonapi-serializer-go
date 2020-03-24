@@ -72,11 +72,11 @@ func marshalDocument(v interface{}, d *Document) ([]byte, error) {
 				relIsSlice = true
 			}
 			if !relIsSlice {
-				if err := marshalRelationship(value, d, memberNames); err != nil {
+				if err := marshalRelationship(value, &d.document, d.Data, memberNames); err != nil {
 					return err
 				}
 			} else {
-				if err := marshalCompoundRelationship(value, d, memberNames); err != nil {
+				if err := marshalCompoundRelationship(value, &d.document, d.Data, memberNames); err != nil {
 					return err
 				}
 			}
@@ -105,6 +105,24 @@ func marshalCompoundDocument(v interface{}, cd *CompoundDocument) ([]byte, error
 				return r.SetIDAndType(value, memberNames[0])
 			case MemberTypeLinks:
 				return r.SetLinks(value)
+			case MemberTypeRelationship:
+				if r.Relationships == nil {
+					r.Relationships = Relationships{}
+				}
+				relIsSlice := false
+				if value.Kind() == reflect.Slice {
+					relIsSlice = true
+				}
+				if !relIsSlice {
+					if err := marshalRelationship(value, &cd.document, r, memberNames); err != nil {
+						return err
+					}
+				} else {
+					if err := marshalCompoundRelationship(value, &cd.document, r, memberNames); err != nil {
+						return err
+					}
+				}
+				return nil
 			default:
 				return marshal(r, memberType, memberNames, value)
 			}
@@ -116,9 +134,9 @@ func marshalCompoundDocument(v interface{}, cd *CompoundDocument) ([]byte, error
 	return json.MarshalIndent(&cd, jsonPrefix, jsonIndent)
 }
 
-func marshalRelationship(value reflect.Value, d *Document, memberNames []string) error {
+func marshalRelationship(value reflect.Value, d *document, r *Resource, memberNames []string) error {
 	rel := NewRelationship()
-	d.Data.Relationships[memberNames[0]] = rel
+	r.Relationships[memberNames[0]] = rel
 	if value.IsNil() {
 		return nil
 	}
@@ -149,9 +167,9 @@ func marshalRelationship(value reflect.Value, d *Document, memberNames []string)
 	return nil
 }
 
-func marshalCompoundRelationship(value reflect.Value, d *Document, memberNames []string) error {
+func marshalCompoundRelationship(value reflect.Value, d *document, r *Resource, memberNames []string) error {
 	rels := NewCompoundRelationship()
-	d.Data.Relationships[memberNames[0]] = rels
+	r.Relationships[memberNames[0]] = rels
 	for i := 0; i < value.Len(); i++ {
 		sValue := value.Index(i)
 		if sValue.Kind() != reflect.Ptr {
