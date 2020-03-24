@@ -19,6 +19,7 @@ type Resource struct {
 func NewResource() *Resource {
 	return &Resource{
 		Attributes: Attributes{},
+		Links:      Links{},
 		Meta:       Meta{},
 	}
 }
