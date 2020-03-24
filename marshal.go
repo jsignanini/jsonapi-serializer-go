@@ -17,7 +17,7 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 	// only allow pointer or slice kind
 	kind := rType.Kind()
 	if kind != reflect.Ptr && kind != reflect.Slice {
-		return nil, fmt.Errorf("v should be pointer or slice")
+		return nil, fmt.Errorf("v must be pointer or slice")
 	}
 
 	// check if it's a slice
@@ -204,10 +204,11 @@ func marshal(resource *Resource, memberType MemberType, memberNames []string, va
 		if i == len(memberNames)-1 {
 			break
 		}
-		if _, ok := search[name]; !ok {
-			search[name] = make(map[string]interface{})
-		}
-		search = search[name].(map[string]interface{})
+		// TODO do we still need this
+		// if _, ok := search[name]; !ok {
+		// 	search[name] = make(map[string]interface{})
+		// }
+		// search = search[name].(map[string]interface{})
 	}
 
 	// if pointer, get non-pointer kind

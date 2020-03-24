@@ -2,6 +2,7 @@ package jsonapi
 
 import (
 	"bytes"
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -39,6 +40,17 @@ func TestMarshal(t *testing.T) {
 	}
 	if bytes.Compare(input, b) != 0 {
 		t.Errorf("Expected:\n%s\nGot:\n%s\n", string(input), string(b))
+	}
+
+	// test incorrectly passing a non pointer to a struct
+	notPointerOrSliceError := "v must be pointer or slice"
+	if b, err := Marshal(s, nil); err == nil {
+		fmt.Println(string(b))
+		t.Errorf("marshal must error out if v is not a pointer or a slice")
+	} else {
+		if err.Error() != notPointerOrSliceError {
+			t.Errorf("marshal must error out if v is not a pointer or a slice with error: %s, got: %s", notPointerOrSliceError, err.Error())
+		}
 	}
 }
 
@@ -178,6 +190,14 @@ func TestMarshalCustomTypePtr(t *testing.T) {
 		String string
 		Valid  bool
 	}
+	type Author struct {
+		Name string
+	}
+	type Article struct {
+		ID     string  `jsonapi:"primary,articles"`
+		Title  string  `jsonapi:"attribute,title"`
+		Author *Author `jsonapi:"attribute,author"`
+	}
 	type TestCustomType struct {
 		ID  string                `jsonapi:"primary,test_custom_types"`
 		Foo *CustomNullableString `jsonapi:"attribute,bar"`
@@ -293,6 +313,23 @@ func TestMarshalCustomTypePtr(t *testing.T) {
 		if bytes.Compare(expectedNil, b) != 0 {
 			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(expectedNil), string(b))
 		}
+	}
+
+	t5 := Article{
+		ID:    "article-id",
+		Title: "Hello world!",
+		Author: &Author{
+			Name: "John Doe",
+		},
+	}
+	noRegisteredCustomMarshalerError := fmt.Sprintf("type: %+v, not supported, must implement custom marshaller", reflect.ValueOf(&Author{}).Type())
+	if b, err := Marshal(&t5, nil); err != nil {
+		if err.Error() != noRegisteredCustomMarshalerError {
+			t.Errorf("marshal must error out if custom struct has no custom marshaler with message: %s, got: %s", noRegisteredCustomMarshalerError, err.Error())
+		}
+	} else {
+		fmt.Println(string(b))
+		t.Errorf("marshal must error out if custom struct has no custom marshaler registered, got no error")
 	}
 }
 
