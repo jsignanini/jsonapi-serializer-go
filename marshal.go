@@ -26,16 +26,7 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 		isSlice = true
 	}
 
-	if !isSlice {
-		// handle optional params
-		ndp := &NewDocumentParams{}
-		if p != nil {
-			ndp.Links = p.Links
-			ndp.Meta = p.Meta
-		}
-		document := NewDocument(ndp)
-		return marshalDocument(v, document)
-	} else {
+	if isSlice {
 		// handle optional params
 		ncdp := &NewCompoundDocumentParams{}
 		if p != nil {
@@ -44,6 +35,15 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 		}
 		document := NewCompoundDocument(ncdp)
 		return marshalCompoundDocument(v, document)
+	} else {
+		// handle optional params
+		ndp := &NewDocumentParams{}
+		if p != nil {
+			ndp.Links = p.Links
+			ndp.Meta = p.Meta
+		}
+		document := NewDocument(ndp)
+		return marshalDocument(v, document)
 	}
 }
 
