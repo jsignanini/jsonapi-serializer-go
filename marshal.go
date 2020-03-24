@@ -67,77 +67,17 @@ func marshalDocument(v interface{}, d *Document) ([]byte, error) {
 			if d.Data.Relationships == nil {
 				d.Data.Relationships = Relationships{}
 			}
-
 			relIsSlice := false
 			if value.Kind() == reflect.Slice {
 				relIsSlice = true
 			}
-
-			// iterate relationship
 			if !relIsSlice {
-				rel := NewRelationship()
-				d.Data.Relationships[memberNames[0]] = rel
-				if value.IsNil() {
-					return nil
-				}
-				newIncl := NewResource()
-				rel.AddResource(NewResource())
-				if err := iterateStruct(value.Interface(), func(v2 reflect.Value, memberType MemberType, memberNames ...string) error {
-					switch memberType {
-					case MemberTypePrimary:
-						if err := rel.Data.SetIDAndType(v2, memberNames[0]); err != nil {
-							return err
-						}
-						return newIncl.SetIDAndType(v2, memberNames[0])
-					case MemberTypeLinks:
-						return newIncl.SetLinks(v2)
-					default:
-						return marshal(newIncl, memberType, memberNames, v2)
-					}
-				}); err != nil {
+				if err := marshalRelationship(value, d, memberNames); err != nil {
 					return err
 				}
-				// make sure it's only added once
-				for _, incl := range d.Included {
-					if incl.Type == newIncl.Type && incl.ID == newIncl.ID {
-						return nil
-					}
-				}
-				d.Included = append(d.Included, newIncl)
 			} else {
-				rels := NewCompoundRelationship()
-				d.Data.Relationships[memberNames[0]] = rels
-				for i := 0; i < value.Len(); i++ {
-					sValue := value.Index(i)
-					if sValue.Kind() != reflect.Ptr {
-						return fmt.Errorf("v should be pointer or slice of pointers")
-					}
-					newIncl := NewResource()
-					newRel := NewRelationship()
-					newRel.AddResource(NewResource())
-					if err := iterateStruct(sValue.Interface(), func(v2 reflect.Value, memberType MemberType, memberNames ...string) error {
-						switch memberType {
-						case MemberTypePrimary:
-							if err := newRel.Data.SetIDAndType(v2, memberNames[0]); err != nil {
-								return err
-							}
-							return newIncl.SetIDAndType(v2, memberNames[0])
-						case MemberTypeLinks:
-							return newIncl.SetLinks(v2)
-						default:
-							return marshal(newIncl, memberType, memberNames, v2)
-						}
-					}); err != nil {
-						return err
-					}
-					// make sure it's only added once
-					for _, incl := range d.Included {
-						if incl.Type == newIncl.Type && incl.ID == newIncl.ID {
-							return nil
-						}
-					}
-					d.Included = append(d.Included, newIncl)
-					rels.Data = append(rels.Data, newRel.Data)
+				if err := marshalCompoundRelationship(value, d, memberNames); err != nil {
+					return err
 				}
 			}
 			return nil
@@ -174,6 +114,77 @@ func marshalCompoundDocument(v interface{}, cd *CompoundDocument) ([]byte, error
 		cd.Data = append(cd.Data, r)
 	}
 	return json.MarshalIndent(&cd, jsonPrefix, jsonIndent)
+}
+
+func marshalRelationship(value reflect.Value, d *Document, memberNames []string) error {
+	rel := NewRelationship()
+	d.Data.Relationships[memberNames[0]] = rel
+	if value.IsNil() {
+		return nil
+	}
+	newIncl := NewResource()
+	rel.AddResource(NewResource())
+	if err := iterateStruct(value.Interface(), func(v2 reflect.Value, memberType MemberType, memberNames ...string) error {
+		switch memberType {
+		case MemberTypePrimary:
+			if err := rel.Data.SetIDAndType(v2, memberNames[0]); err != nil {
+				return err
+			}
+			return newIncl.SetIDAndType(v2, memberNames[0])
+		case MemberTypeLinks:
+			return newIncl.SetLinks(v2)
+		default:
+			return marshal(newIncl, memberType, memberNames, v2)
+		}
+	}); err != nil {
+		return err
+	}
+	// make sure it's only added once
+	for _, incl := range d.Included {
+		if incl.Type == newIncl.Type && incl.ID == newIncl.ID {
+			return nil
+		}
+	}
+	d.Included = append(d.Included, newIncl)
+	return nil
+}
+
+func marshalCompoundRelationship(value reflect.Value, d *Document, memberNames []string) error {
+	rels := NewCompoundRelationship()
+	d.Data.Relationships[memberNames[0]] = rels
+	for i := 0; i < value.Len(); i++ {
+		sValue := value.Index(i)
+		if sValue.Kind() != reflect.Ptr {
+			return fmt.Errorf("v should be pointer or slice of pointers")
+		}
+		newIncl := NewResource()
+		newRel := NewRelationship()
+		newRel.AddResource(NewResource())
+		if err := iterateStruct(sValue.Interface(), func(v2 reflect.Value, memberType MemberType, memberNames ...string) error {
+			switch memberType {
+			case MemberTypePrimary:
+				if err := newRel.Data.SetIDAndType(v2, memberNames[0]); err != nil {
+					return err
+				}
+				return newIncl.SetIDAndType(v2, memberNames[0])
+			case MemberTypeLinks:
+				return newIncl.SetLinks(v2)
+			default:
+				return marshal(newIncl, memberType, memberNames, v2)
+			}
+		}); err != nil {
+			return err
+		}
+		// make sure it's only added once
+		for _, incl := range d.Included {
+			if incl.Type == newIncl.Type && incl.ID == newIncl.ID {
+				return nil
+			}
+		}
+		d.Included = append(d.Included, newIncl)
+		rels.Data = append(rels.Data, newRel.Data)
+	}
+	return nil
 }
 
 func marshal(resource *Resource, memberType MemberType, memberNames []string, value reflect.Value) error {
