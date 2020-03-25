@@ -133,6 +133,45 @@ func TestMarshalErrors(t *testing.T) {
 			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(simpleErrorWithMetaAndLinksExpected), string(b))
 		}
 	}
+
+	// error with document meta and links
+	simpleErrorWithDocumentMetaAndLinks := Error{
+		ID:     "NOT_FOUND",
+		Status: "404",
+		Title:  "not-found",
+	}
+	simpleErrorWithDocumentMetaAndLinksExpected := []byte(`{
+	"jsonapi": {
+		"version": "1.0"
+	},
+	"meta": {
+		"errors_documentation_url": "https://example.com"
+	},
+	"links": {
+		"about": "/errors/NOT_FOUND"
+	},
+	"errors": [
+		{
+			"id": "NOT_FOUND",
+			"status": "404",
+			"title": "not-found"
+		}
+	]
+}`)
+	if b, err := MarshalErrors(&MarshalParams{
+		Links: &Links{
+			"about": "/errors/NOT_FOUND",
+		},
+		Meta: &Meta{
+			"errors_documentation_url": "https://example.com",
+		},
+	}, simpleErrorWithDocumentMetaAndLinks); err != nil {
+		t.Errorf(err.Error())
+	} else {
+		if bytes.Compare(simpleErrorWithDocumentMetaAndLinksExpected, b) != 0 {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(simpleErrorWithDocumentMetaAndLinksExpected), string(b))
+		}
+	}
 }
 
 func TestMarshalManyErrors(t *testing.T) {
