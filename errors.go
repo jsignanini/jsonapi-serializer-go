@@ -1,6 +1,6 @@
 package jsonapi
 
-import "encoding/json"
+import "fmt"
 
 type Error struct {
 	ID     string            `json:"id,omitempty"`
@@ -14,8 +14,5 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	if b, err := json.MarshalIndent(e, jsonPrefix, jsonIndent); err == nil {
-		return string(b)
-	}
-	return ""
+	return fmt.Sprintf("%+v", *e)
 }
