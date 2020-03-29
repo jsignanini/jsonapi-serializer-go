@@ -20,7 +20,7 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 		return nil, fmt.Errorf("v must be pointer or slice")
 	}
 
-	// check if it's a slice
+	// determine if v is a slice
 	isSlice := false
 	if rType.Elem().Kind() == reflect.Slice {
 		isSlice = true

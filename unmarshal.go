@@ -6,90 +6,82 @@ import (
 	"reflect"
 )
 
-func getValueForMember(document *Document, memberType MemberType, memberNames ...string) (interface{}, error) {
-	var search map[string]interface{}
-	switch memberType {
-	case MemberTypeAttribute:
-		search = document.Data.Attributes
-	case MemberTypeMeta:
-		search = document.Data.Meta
-	}
-	for i, name := range memberNames {
-		value, ok := search[name]
-		if !ok {
-			return "", fmt.Errorf("not ok")
-		}
-		if i == len(memberNames)-1 {
-			return value, nil
-		}
-		search = search[name].(map[string]interface{})
-	}
-	return "", fmt.Errorf("memberNames was empty")
-}
-
 func Unmarshal(data []byte, v interface{}) error {
-	kind := reflect.TypeOf(v).Kind()
-	if kind != reflect.Ptr && kind != reflect.Slice {
-		return fmt.Errorf("v should be pointer or slice")
+	rType := reflect.TypeOf(v)
+	rValue := reflect.ValueOf(v)
+	kind := rType.Kind()
+
+	// v must be pointer
+	if kind != reflect.Ptr {
+		return fmt.Errorf("v must be pointer")
 	}
 
+	// v must not be nil
+	if rValue.IsNil() {
+		return fmt.Errorf("v must not be nil")
+	}
+
+	// determine if v is a slice
 	isSlice := false
-	if reflect.TypeOf(v).Elem().Kind() == reflect.Slice {
+	if rType.Elem().Kind() == reflect.Slice {
 		isSlice = true
 	}
 
-	if !isSlice {
-		document := NewDocument(&NewDocumentParams{})
+	if isSlice {
+		document := NewCompoundDocument(nil)
 		if err := json.Unmarshal(data, document); err != nil {
 			return err
 		}
+		return unmarshalCompoundDocument(v, document)
+	} else {
+		document := NewDocument(nil)
+		if err := json.Unmarshal(data, document); err != nil {
+			return err
+		}
+		return unmarshalDocument(v, document)
+	}
+}
 
-		if err := iterateStruct(v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
+func unmarshalCompoundDocument(v interface{}, cd *CompoundDocument) error {
+	rValue := reflect.ValueOf(v)
+	for _, resource := range cd.Data {
+		v2 := reflect.New(rValue.Elem().Type().Elem()).Interface()
+		if err := iterateStruct(v2, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
 			fieldKind := value.Kind()
 			// TODO this sets ID for all nexted primary tag fields
 			if memberType == MemberTypePrimary {
 				if fieldKind != reflect.String {
 					return fmt.Errorf("ID must be a string")
 				}
-				value.SetString(document.Data.ID)
+				value.SetString(resource.ID)
 				return nil
 			}
-
 			// set raw value
-			return unmarshal(document.Data, memberType, memberNames, value)
+			return unmarshal(resource, memberType, memberNames, value)
 		}); err != nil {
 			return err
 		}
-	} else {
-		document := NewCompoundDocument(&NewCompoundDocumentParams{})
-		if err := json.Unmarshal(data, document); err != nil {
-			return err
-		}
-
-		for _, resource := range document.Data {
-			v2 := reflect.New(reflect.ValueOf(v).Elem().Type().Elem()).Interface()
-			if err := iterateStruct(v2, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
-				fieldKind := value.Kind()
-				// TODO this sets ID for all nexted primary tag fields
-				if memberType == MemberTypePrimary {
-					if fieldKind != reflect.String {
-						return fmt.Errorf("ID must be a string")
-					}
-					value.SetString(resource.ID)
-					return nil
-				}
-
-				// set raw value
-				return unmarshal(resource, memberType, memberNames, value)
-			}); err != nil {
-				return err
-			}
-			value := reflect.ValueOf(v).Elem()
-			value.Set(reflect.Append(value, reflect.ValueOf(v2).Elem()))
-		}
+		value := rValue.Elem()
+		value.Set(reflect.Append(value, reflect.ValueOf(v2).Elem()))
 	}
-
 	return nil
+}
+
+func unmarshalDocument(v interface{}, d *Document) error {
+	return iterateStruct(v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
+		fieldKind := value.Kind()
+		// TODO this sets ID for all nexted primary tag fields
+		if memberType == MemberTypePrimary {
+			if fieldKind != reflect.String {
+				return fmt.Errorf("ID must be a string")
+			}
+			value.SetString(d.Data.ID)
+			return nil
+		}
+
+		// set raw value
+		return unmarshal(d.Data, memberType, memberNames, value)
+	})
 }
 
 func RegisterUnmarshaler(t reflect.Type, u unmarshalerFunc) {
