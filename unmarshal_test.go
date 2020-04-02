@@ -275,7 +275,45 @@ func TestUnmarshalUint(t *testing.T) {
 }
 
 func TestUnmarshalUintPtr(t *testing.T) {
-	// TODO
+	type Sample struct {
+		ID     string `jsonapi:"primary,uints"`
+		Uint   uint   `jsonapi:"attribute,uint"`
+		Uint16 uint16 `jsonapi:"attribute,uint16"`
+		Uint32 uint32 `jsonapi:"attribute,uint32"`
+		Uint64 uint64 `jsonapi:"attribute,uint64"`
+	}
+	normalOut := Sample{}
+	normalIn := []byte(`{
+	"data": {
+		"id": "sample-1",
+		"type": "uints",
+		"attributes": {
+			"uint": 10,
+			"uint16": 54234,
+			"uint32": 4294967295,
+			"uint64": 18446744073709550000
+		}
+	}
+}`)
+	if err := Unmarshal(normalIn, &normalOut); err != nil {
+		t.Errorf(err.Error())
+	}
+	if normalOut.ID != "sample-1" {
+		t.Errorf("expected id to be: %s, got: %s", "sample-1", normalOut.ID)
+	}
+	if normalOut.Uint != 10 {
+		t.Errorf("expected uint to be: %d, got: %d", 10, normalOut.Uint)
+	}
+	if normalOut.Uint16 != 54234 {
+		t.Errorf("expected uint16 to be: %d, got: %d", 54234, normalOut.Uint16)
+	}
+	if normalOut.Uint32 != 4294967295 {
+		t.Errorf("expected uint32 to be: %d, got: %d", 4294967295, normalOut.Uint32)
+	}
+	// TODO encoding/json seems to be overflowing once past uint32 max
+	// if normalOut.Uint64 != 10 {
+	// 	t.Errorf("expected uint64 to be: %d, got: %d", uint64(18446744073709550000), normalOut.Uint64)
+	// }
 }
 
 func TestUnmarshalUint8(t *testing.T) {
