@@ -42,6 +42,14 @@ func Unmarshal(data []byte, v interface{}) error {
 	}
 }
 
+func RegisterUnmarshaler(t reflect.Type, u unmarshalerFunc) {
+	customUnmarshalers[t] = u
+}
+
+type unmarshalerFunc = func(interface{}, reflect.Value)
+
+var customUnmarshalers = make(map[reflect.Type]unmarshalerFunc)
+
 func unmarshalCompoundDocument(v interface{}, cd *CompoundDocument) error {
 	rValue := reflect.ValueOf(v)
 	for _, resource := range cd.Data {
@@ -84,15 +92,7 @@ func unmarshalDocument(v interface{}, d *Document) error {
 	})
 }
 
-func RegisterUnmarshaler(t reflect.Type, u unmarshalerFunc) {
-	customUnmarshalers[t] = u
-}
-
-type unmarshalerFunc = func(interface{}, reflect.Value)
-
-var customUnmarshalers = make(map[reflect.Type]unmarshalerFunc)
-
-func unmarshal(resource *Resource, memberType MemberType, memberNames []string, value reflect.Value) error {
+func unmarshal(resource *Resource, memberType MemberType, memberNames []string, field reflect.Value) error {
 	// find raw value if exists
 	var search map[string]interface{}
 	switch memberType {
@@ -106,106 +106,33 @@ func unmarshal(resource *Resource, memberType MemberType, memberNames []string, 
 		return nil
 	}
 
-	// if pointer, get non-pointer kind
-	isPtr := false
-	kind := value.Kind()
-	if kind == reflect.Ptr {
-		isPtr = true
-		kind = reflect.New(value.Type().Elem()).Elem().Kind()
+	if cu, ok := customUnmarshalers[field.Type()]; ok {
+		cu(rawValue, field)
+		return nil
 	}
 
+	// if pointer, get non-pointer kind
+	if field.Kind() == reflect.Ptr {
+		field.Set(reflect.New(field.Type().Elem()))
+		field = field.Elem()
+	}
+	value := reflect.Indirect(reflect.ValueOf(rawValue))
+
 	// set values by kind
-	switch kind {
+	switch field.Kind() {
 	case reflect.Bool:
-		if val, ok := rawValue.(bool); ok {
-			if isPtr {
-				value.Set(reflect.ValueOf(&val))
-			} else {
-				value.SetBool(val)
-			}
-		}
+		field.SetBool(value.Bool())
 	case reflect.String:
-		if val, ok := rawValue.(string); ok {
-			if isPtr {
-				value.Set(reflect.ValueOf(&val))
-			} else {
-				value.SetString(val)
-			}
-		}
-	case reflect.Int:
-		if val, ok := rawValue.(float64); ok {
-			intVal := int(val)
-			// TODO resourceValue.OverflowInt(val)
-			if isPtr {
-				value.Set(reflect.ValueOf(&intVal))
-			} else {
-				value.SetInt(int64(intVal))
-			}
-		}
-	case reflect.Int8:
-		if val, ok := rawValue.(float64); ok {
-			intVal := int8(val)
-			// TODO resourceValue.OverflowInt(val)
-			if isPtr {
-				value.Set(reflect.ValueOf(&intVal))
-			} else {
-				value.SetInt(int64(intVal))
-			}
-		}
-	case reflect.Int16:
-		if val, ok := rawValue.(float64); ok {
-			intVal := int16(val)
-			// TODO resourceValue.OverflowInt(val)
-			if isPtr {
-				value.Set(reflect.ValueOf(&intVal))
-			} else {
-				value.SetInt(int64(intVal))
-			}
-		}
-	case reflect.Int32:
-		if val, ok := rawValue.(float64); ok {
-			intVal := int32(val)
-			// TODO resourceValue.OverflowInt(val)
-			if isPtr {
-				value.Set(reflect.ValueOf(&intVal))
-			} else {
-				value.SetInt(int64(intVal))
-			}
-		}
-	case reflect.Int64:
-		if val, ok := rawValue.(float64); ok {
-			intVal := int64(val)
-			// TODO resourceValue.OverflowInt(val)
-			if isPtr {
-				value.Set(reflect.ValueOf(&intVal))
-			} else {
-				value.SetInt(intVal)
-			}
-		}
+		field.SetString(value.String())
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		// encoding/json casts all numbers into float64 so this extra cast is necessary
+		field.SetInt(int64(value.Float()))
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		if val, ok := rawValue.(float64); ok {
-			// TODO resourceValue.OverflowInt(val)
-			if isPtr {
-				value.Set(reflect.ValueOf(&val))
-			} else {
-				value.SetUint(uint64(val))
-			}
-		}
+		field.SetUint(value.Uint())
 	case reflect.Float32, reflect.Float64:
-		if val, ok := rawValue.(float64); ok {
-			// TODO resourceValue.OverflowInt(val)
-			if isPtr {
-				value.Set(reflect.ValueOf(&val))
-			} else {
-				value.SetFloat(val)
-			}
-		}
+		field.SetFloat(value.Float())
 	default:
-		cu, ok := customUnmarshalers[value.Type()]
-		if !ok {
-			return fmt.Errorf("Type: %+v, not supported, must implement custom unmarshaller", value.Type())
-		}
-		cu(rawValue, value)
+		return fmt.Errorf("Type: %+v, not supported, must implement custom unmarshaller", field.Type())
 	}
 	return nil
 }
