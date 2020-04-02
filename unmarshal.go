@@ -128,7 +128,8 @@ func unmarshal(resource *Resource, memberType MemberType, memberNames []string, 
 		// encoding/json casts all numbers into float64 so this extra cast is necessary
 		field.SetInt(int64(value.Float()))
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		field.SetUint(value.Uint())
+		// encoding/json casts all numbers into float64 so this extra cast is necessary
+		field.SetUint(uint64(value.Float()))
 	case reflect.Float32, reflect.Float64:
 		field.SetFloat(value.Float())
 	default:
