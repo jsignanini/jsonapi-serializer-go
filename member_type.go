@@ -32,6 +32,7 @@ func NewMemberType(s string) (MemberType, error) {
 		return "", fmt.Errorf("MemberType '%s' not found.", s)
 	}
 }
+
 func getMember(field reflect.StructField) (MemberType, string, error) {
 	tag, ok := field.Tag.Lookup(tagKey)
 	if !ok {
