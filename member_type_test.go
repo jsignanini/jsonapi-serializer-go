@@ -82,4 +82,7 @@ func TestGetMember(t *testing.T) {
 			t.Errorf("expected tag missing error: %s, but got no error", fmt.Errorf("tag: %s, not specified", tagKey))
 		}
 	}
+	if _, err := Marshal(&test, nil); err == nil {
+		t.Errorf("expected getMember error but got no error")
+	}
 }
