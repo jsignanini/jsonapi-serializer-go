@@ -32,8 +32,8 @@ type Sample struct {
 	Default         string
 	DefaultWithName string
 
-	// ignored field
-	IgnoredField string `jsonapi:"-"`
+	// TODO ignored field
+	// IgnoredField string `jsonapi:"-"`
 }
 
 type CustomNullableString struct {

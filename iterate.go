@@ -39,10 +39,13 @@ func iterateStruct(v interface{}, iter iterFunc, memberNames ...string) error {
 			continue
 		}
 
-		// get member info, continue otherwise
+		// if tag exists, get member info, continue otherwise
+		if _, ok := fType.Tag.Lookup(tagKey); !ok {
+			continue
+		}
 		memberType, memberName, err := getMember(fType)
 		if err != nil {
-			continue
+			return err
 		}
 
 		// handle nested structs

@@ -29,3 +29,41 @@ func TestNewMemberType(t *testing.T) {
 		}
 	}
 }
+
+func TestGetMember(t *testing.T) {
+	type Correct struct {
+		ID      string `jsonapi:"primary,corrects"`
+		Correct string `jsonapi:"attribute,correct"`
+	}
+	c := Correct{
+		ID:      "correct-id",
+		Correct: "correct",
+	}
+	if _, err := Marshal(&c, nil); err != nil {
+		t.Errorf("got unexpected error: %s, for correct member: %s", err, "attribute")
+	}
+
+	type Incorrect struct {
+		ID        string `jsonapi:"primary,incorrects"`
+		Incorrect string `jsonapi:"foo,empty"`
+	}
+	i := Incorrect{
+		ID:        "incorrect-id",
+		Incorrect: "incorrect",
+	}
+	if _, err := Marshal(&i, nil); err == nil {
+		t.Errorf("expected incorrect member: %s, to error out", "foo")
+	}
+
+	type Empty struct {
+		ID    string `jsonapi:"primary,empties"`
+		Empty string `jsonapi:""`
+	}
+	e := Empty{
+		ID:    "empty-id",
+		Empty: "empty",
+	}
+	if _, err := Marshal(&e, nil); err == nil {
+		t.Errorf("expected empty tag error: %s, but got no error", fmt.Errorf("tag: %s, not specified", tagKey))
+	}
+}
