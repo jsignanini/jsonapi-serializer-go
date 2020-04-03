@@ -74,6 +74,32 @@ func main() {
 }
 ```
 
+Outputs:
+```json
+{
+	"data": {
+		"id": "0-394-50294-9",
+		"type": "books",
+		"attributes": {
+			"author": {
+				"ID": "c3a6ddb6-7e5e-4264-bd03-ef6e41d76365",
+				"FirstName": "Carl",
+				"LastName": "Sagan"
+			},
+			"bindings": [
+				"Hardcover",
+				"Paperback"
+			],
+			"publication_date": 1980,
+			"subject": "Cosmology",
+			"title": "Cosmos"
+		}
+	},
+	"jsonapi": {
+		"version": "1.0"
+	}
+}
+```
 
 ### TODOs
 
