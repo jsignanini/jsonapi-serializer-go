@@ -36,7 +36,9 @@ func TestGetMember(t *testing.T) {
 		ID        string `jsonapi:"primary,corrects"`
 		Correct   string `jsonapi:"attribute,correct"`
 		Incorrect string `jsonapi:"foo,empty"`
+		Malformed string `jsonapi:"foo,bar,malformed"`
 		Empty     string `jsonapi:""`
+		NoTag     string
 	}
 	test := GetMemterTest{
 		ID:        "correct-id",
@@ -59,11 +61,25 @@ func TestGetMember(t *testing.T) {
 			t.Errorf("expected incorrect member: %s, to error out", "foo")
 		}
 	}
+	if e, ok := reflect.TypeOf(test).FieldByName("Malformed"); !ok {
+		t.Fatal("not ok")
+	} else {
+		if _, _, err := getMember(e); err == nil {
+			t.Errorf("expected malformed tag error: %s, but got no error", fmt.Errorf("tag: %s, was not formatted properly", tagKey))
+		}
+	}
 	if e, ok := reflect.TypeOf(test).FieldByName("Empty"); !ok {
 		t.Fatal("not ok")
 	} else {
 		if _, _, err := getMember(e); err == nil {
 			t.Errorf("expected empty tag error: %s, but got no error", fmt.Errorf("tag: %s, not specified", tagKey))
+		}
+	}
+	if e, ok := reflect.TypeOf(test).FieldByName("NoTag"); !ok {
+		t.Fatal("not ok")
+	} else {
+		if _, _, err := getMember(e); err == nil {
+			t.Errorf("expected tag missing error: %s, but got no error", fmt.Errorf("tag: %s, not specified", tagKey))
 		}
 	}
 }
