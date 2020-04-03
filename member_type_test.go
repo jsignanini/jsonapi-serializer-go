@@ -2,6 +2,7 @@ package jsonapi
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -31,39 +32,38 @@ func TestNewMemberType(t *testing.T) {
 }
 
 func TestGetMember(t *testing.T) {
-	type Correct struct {
-		ID      string `jsonapi:"primary,corrects"`
-		Correct string `jsonapi:"attribute,correct"`
-	}
-	c := Correct{
-		ID:      "correct-id",
-		Correct: "correct",
-	}
-	if _, err := Marshal(&c, nil); err != nil {
-		t.Errorf("got unexpected error: %s, for correct member: %s", err, "attribute")
-	}
-
-	type Incorrect struct {
-		ID        string `jsonapi:"primary,incorrects"`
+	type GetMemterTest struct {
+		ID        string `jsonapi:"primary,corrects"`
+		Correct   string `jsonapi:"attribute,correct"`
 		Incorrect string `jsonapi:"foo,empty"`
+		Empty     string `jsonapi:""`
 	}
-	i := Incorrect{
-		ID:        "incorrect-id",
+	test := GetMemterTest{
+		ID:        "correct-id",
+		Correct:   "correct",
 		Incorrect: "incorrect",
-	}
-	if _, err := Marshal(&i, nil); err == nil {
-		t.Errorf("expected incorrect member: %s, to error out", "foo")
+		Empty:     "empty",
 	}
 
-	type Empty struct {
-		ID    string `jsonapi:"primary,empties"`
-		Empty string `jsonapi:""`
+	if c, ok := reflect.TypeOf(test).FieldByName("Correct"); !ok {
+		t.Fatal("not ok")
+	} else {
+		if _, _, err := getMember(c); err != nil {
+			t.Errorf("got unexpected error: %s, for correct member: %s", err, "attribute")
+		}
 	}
-	e := Empty{
-		ID:    "empty-id",
-		Empty: "empty",
+	if i, ok := reflect.TypeOf(test).FieldByName("Incorrect"); !ok {
+		t.Fatal("not ok")
+	} else {
+		if _, _, err := getMember(i); err == nil {
+			t.Errorf("expected incorrect member: %s, to error out", "foo")
+		}
 	}
-	if _, err := Marshal(&e, nil); err == nil {
-		t.Errorf("expected empty tag error: %s, but got no error", fmt.Errorf("tag: %s, not specified", tagKey))
+	if e, ok := reflect.TypeOf(test).FieldByName("Empty"); !ok {
+		t.Fatal("not ok")
+	} else {
+		if _, _, err := getMember(e); err == nil {
+			t.Errorf("expected empty tag error: %s, but got no error", fmt.Errorf("tag: %s, not specified", tagKey))
+		}
 	}
 }
