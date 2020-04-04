@@ -5,15 +5,8 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
-	"regexp"
 	"strings"
 )
-
-var float64TrimRegExp *regexp.Regexp
-
-func init() {
-	float64TrimRegExp = regexp.MustCompile("^\\%\\!s\\(float64=([\\de+]*)\\)$")
-}
 
 func Unmarshal(data []byte, v interface{}) error {
 	rType := reflect.TypeOf(v)
@@ -159,8 +152,8 @@ func deepSearch(tree map[string]interface{}, keys ...string) (interface{}, bool)
 
 func setInt(field, value reflect.Value) error {
 	bf := new(big.Float)
-	strFloat64 := float64StringFromValue(value)
-	if _, err := fmt.Sscan(strFloat64, bf); err != nil {
+	float64Str := float64StringFromValue(value)
+	if _, err := fmt.Sscan(float64Str, bf); err != nil {
 		return err
 	}
 	i, _ := bf.Int64()
@@ -170,8 +163,8 @@ func setInt(field, value reflect.Value) error {
 
 func setUint(field, value reflect.Value) error {
 	bf := new(big.Float)
-	strFloat64 := float64StringFromValue(value)
-	if _, err := fmt.Sscan(strFloat64, bf); err != nil {
+	float64Str := float64StringFromValue(value)
+	if _, err := fmt.Sscan(float64Str, bf); err != nil {
 		return err
 	}
 	ui, _ := bf.Uint64()

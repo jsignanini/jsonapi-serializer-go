@@ -295,6 +295,8 @@ func TestUnmarshalUints(t *testing.T) {
 		Uint32 uint32 `jsonapi:"attribute,uint32"`
 		Uint64 uint64 `jsonapi:"attribute,uint64"`
 	}
+
+	// test maximums
 	maxOut := Sample{}
 	max := []byte(fmt.Sprintf(`{
 	"data": {
@@ -329,6 +331,26 @@ func TestUnmarshalUints(t *testing.T) {
 	}
 	if maxOut.Uint64 != math.MaxUint64 {
 		t.Errorf("expected uint64 to be: %d, got: %d", uint64(math.MaxUint64), maxOut.Uint64)
+	}
+
+	// test incorrectly sending a string instead of an int
+	wrongTypeOut := Sample{}
+	wrongTypeErr := "number has no digits"
+	wrongType := []byte(`{
+	"data": {
+		"id": "sample-1",
+		"type": "uints",
+		"attributes": {
+			"uint": "wrong string"
+		}
+	}
+}`)
+	if err := Unmarshal(wrongType, &wrongTypeOut); err == nil {
+		t.Errorf("expected error: %s, got no error", wrongTypeErr)
+	} else {
+		if err.Error() != wrongTypeErr {
+			t.Errorf("expected error: %s, got: %s", wrongTypeErr, err.Error())
+		}
 	}
 }
 
