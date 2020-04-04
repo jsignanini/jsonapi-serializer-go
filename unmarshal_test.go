@@ -1,6 +1,8 @@
 package jsonapi
 
 import (
+	"fmt"
+	"math"
 	"reflect"
 	"testing"
 )
@@ -238,114 +240,118 @@ func TestUnmarshalIntPtr(t *testing.T) {
 	}
 }
 
-func TestUnmarshalInt8(t *testing.T) {
-	// TODO
+func TestUnmarshalInts(t *testing.T) {
+	type Sample struct {
+		ID    string `jsonapi:"primary,ints"`
+		Int   int    `jsonapi:"attribute,int"`
+		Int8  int8   `jsonapi:"attribute,int8"`
+		Int16 int16  `jsonapi:"attribute,int16"`
+		Int32 int32  `jsonapi:"attribute,int32"`
+		Int64 int64  `jsonapi:"attribute,int64"`
+	}
+	maxOut := Sample{}
+	max := []byte(fmt.Sprintf(`{
+	"data": {
+		"id": "sample-1",
+		"type": "ints",
+		"attributes": {
+			"int": 10,
+			"int8": %d,
+			"int16": %d,
+			"int32": %d,
+			"int64": %d
+		}
+	}
+}`, math.MaxInt8, math.MaxInt16, math.MaxInt32, math.MaxInt64))
+	if err := Unmarshal(max, &maxOut); err != nil {
+		t.Errorf(err.Error())
+	}
+	if maxOut.ID != "sample-1" {
+		t.Errorf("expected id to be: %s, got: %s", "sample-1", maxOut.ID)
+	}
+	if maxOut.Int != 10 {
+		t.Errorf("expected int to be: %d, got: %d", 10, maxOut.Int)
+	}
+	if maxOut.Int8 != math.MaxInt8 {
+		t.Errorf("expected int8 to be: %d, got: %d", math.MaxInt8, maxOut.Int8)
+	}
+	if maxOut.Int16 != math.MaxInt16 {
+		t.Errorf("expected int16 to be: %d, got: %d", math.MaxInt16, maxOut.Int16)
+	}
+	if maxOut.Int32 != math.MaxInt32 {
+		t.Errorf("expected int32 to be: %d, got: %d", math.MaxInt32, maxOut.Int32)
+	}
+	if maxOut.Int64 != math.MaxInt64 {
+		t.Errorf("expected int64 to be: %d, got: %d", math.MaxInt64, maxOut.Int64)
+	}
 }
 
-func TestUnmarshalInt8Ptr(t *testing.T) {
-	// TODO
-}
-
-func TestUnmarshalInt16(t *testing.T) {
-	// TODO
-}
-
-func TestUnmarshalInt16Ptr(t *testing.T) {
-	// TODO
-}
-
-func TestUnmarshalInt32(t *testing.T) {
-	// TODO
-}
-
-func TestUnmarshalInt32Ptr(t *testing.T) {
-	// TODO
-}
-
-func TestUnmarshalInt64(t *testing.T) {
-	// TODO
-}
-
-func TestUnmarshalInt64Ptr(t *testing.T) {
-	// TODO
-}
-
-func TestUnmarshalUint(t *testing.T) {
-	// TODO
-}
-
-func TestUnmarshalUintPtr(t *testing.T) {
+func TestUnmarshalUints(t *testing.T) {
 	type Sample struct {
 		ID     string `jsonapi:"primary,uints"`
 		Uint   uint   `jsonapi:"attribute,uint"`
+		Uint8  uint8  `jsonapi:"attribute,uint8"`
 		Uint16 uint16 `jsonapi:"attribute,uint16"`
 		Uint32 uint32 `jsonapi:"attribute,uint32"`
 		Uint64 uint64 `jsonapi:"attribute,uint64"`
 	}
-	normalOut := Sample{}
-	normalIn := []byte(`{
+
+	// test maximums
+	maxOut := Sample{}
+	max := []byte(fmt.Sprintf(`{
 	"data": {
 		"id": "sample-1",
 		"type": "uints",
 		"attributes": {
 			"uint": 10,
-			"uint16": 54234,
-			"uint32": 4294967295,
-			"uint64": 18446744073709550000
+			"uint8": %d,
+			"uint16": %d,
+			"uint32": %d,
+			"uint64": %d
+		}
+	}
+}`, math.MaxUint8, math.MaxUint16, math.MaxUint32, uint64(math.MaxUint64)))
+	if err := Unmarshal(max, &maxOut); err != nil {
+		t.Errorf(err.Error())
+	}
+	if maxOut.ID != "sample-1" {
+		t.Errorf("expected id to be: %s, got: %s", "sample-1", maxOut.ID)
+	}
+	if maxOut.Uint != 10 {
+		t.Errorf("expected uint to be: %d, got: %d", 10, maxOut.Uint)
+	}
+	if maxOut.Uint8 != math.MaxUint8 {
+		t.Errorf("expected uint8 to be: %d, got: %d", math.MaxUint8, maxOut.Uint8)
+	}
+	if maxOut.Uint16 != math.MaxUint16 {
+		t.Errorf("expected uint16 to be: %d, got: %d", math.MaxUint16, maxOut.Uint16)
+	}
+	if maxOut.Uint32 != math.MaxUint32 {
+		t.Errorf("expected uint32 to be: %d, got: %d", math.MaxUint32, maxOut.Uint32)
+	}
+	if maxOut.Uint64 != math.MaxUint64 {
+		t.Errorf("expected uint64 to be: %d, got: %d", uint64(math.MaxUint64), maxOut.Uint64)
+	}
+
+	// test incorrectly sending a string instead of an int
+	wrongTypeOut := Sample{}
+	wrongTypeErr := "number has no digits"
+	wrongType := []byte(`{
+	"data": {
+		"id": "sample-1",
+		"type": "uints",
+		"attributes": {
+			"uint": "wrong string"
 		}
 	}
 }`)
-	if err := Unmarshal(normalIn, &normalOut); err != nil {
-		t.Errorf(err.Error())
+	if err := Unmarshal(wrongType, &wrongTypeOut); err == nil {
+		t.Errorf("expected error: %s, got no error", wrongTypeErr)
+	} else {
+		if err.Error() != wrongTypeErr {
+			t.Errorf("expected error: %s, got: %s", wrongTypeErr, err.Error())
+		}
 	}
-	if normalOut.ID != "sample-1" {
-		t.Errorf("expected id to be: %s, got: %s", "sample-1", normalOut.ID)
-	}
-	if normalOut.Uint != 10 {
-		t.Errorf("expected uint to be: %d, got: %d", 10, normalOut.Uint)
-	}
-	if normalOut.Uint16 != 54234 {
-		t.Errorf("expected uint16 to be: %d, got: %d", 54234, normalOut.Uint16)
-	}
-	if normalOut.Uint32 != 4294967295 {
-		t.Errorf("expected uint32 to be: %d, got: %d", 4294967295, normalOut.Uint32)
-	}
-	// TODO encoding/json seems to be overflowing once past uint32 max
-	// if normalOut.Uint64 != 10 {
-	// 	t.Errorf("expected uint64 to be: %d, got: %d", uint64(18446744073709550000), normalOut.Uint64)
-	// }
-}
-
-func TestUnmarshalUint8(t *testing.T) {
-	// TODO
-}
-
-func TestUnmarshalUint8Ptr(t *testing.T) {
-	// TODO
-}
-
-func TestUnmarshalUint16(t *testing.T) {
-	// TODO
-}
-
-func TestUnmarshalUint16Ptr(t *testing.T) {
-	// TODO
-}
-
-func TestUnmarshalUint32(t *testing.T) {
-	// TODO
-}
-
-func TestUnmarshalUint32Ptr(t *testing.T) {
-	// TODO
-}
-
-func TestUnmarshalUint64(t *testing.T) {
-	// TODO
-}
-
-func TestUnmarshalUint64Ptr(t *testing.T) {
-	// TODO
 }
 
 func TestUnmarshalNestedStruct(t *testing.T) {

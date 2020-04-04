@@ -3,7 +3,9 @@ package jsonapi
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"reflect"
+	"strings"
 )
 
 func Unmarshal(data []byte, v interface{}) error {
@@ -125,11 +127,9 @@ func unmarshal(resource *Resource, memberType MemberType, memberNames []string, 
 	case reflect.String:
 		field.SetString(value.String())
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		// encoding/json casts all numbers into float64 so this extra cast is necessary
-		field.SetInt(int64(value.Float()))
+		return setInt(field, value)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		// encoding/json casts all numbers into float64 so this extra cast is necessary
-		field.SetUint(uint64(value.Float()))
+		return setUint(field, value)
 	case reflect.Float32, reflect.Float64:
 		field.SetFloat(value.Float())
 	default:
@@ -148,4 +148,33 @@ func deepSearch(tree map[string]interface{}, keys ...string) (interface{}, bool)
 		return value, true
 	}
 	return deepSearch(tree[key].(map[string]interface{}), keys...)
+}
+
+func setInt(field, value reflect.Value) error {
+	bf := new(big.Float)
+	float64Str := float64StringFromValue(value)
+	if _, err := fmt.Sscan(float64Str, bf); err != nil {
+		return err
+	}
+	i, _ := bf.Int64()
+	field.SetInt(i)
+	return nil
+}
+
+func setUint(field, value reflect.Value) error {
+	bf := new(big.Float)
+	float64Str := float64StringFromValue(value)
+	if _, err := fmt.Sscan(float64Str, bf); err != nil {
+		return err
+	}
+	ui, _ := bf.Uint64()
+	field.SetUint(ui)
+	return nil
+}
+
+func float64StringFromValue(value reflect.Value) string {
+	s := fmt.Sprintf("%s", value)
+	s = strings.TrimPrefix(s, "%!s(float64=")
+	s = strings.TrimSuffix(s, ")")
+	return s
 }
