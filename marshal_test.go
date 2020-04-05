@@ -1796,6 +1796,7 @@ func TestMarshalRelationship(t *testing.T) {
 		Foo     string `jsonapi:"attribute,foo"`
 		Bar     *Bar   `jsonapi:"relationship,bar"`
 		Another *Bar   `jsonapi:"relationship,another"`
+		Repeat  *Bar   `jsonapi:"relationship,repeat"`
 	}
 	test := TestRelationship{
 		ID:  "someID",
@@ -1805,6 +1806,10 @@ func TestMarshalRelationship(t *testing.T) {
 			Hello: "world!",
 		},
 		Another: &Bar{
+			ID:    "barID2",
+			Hello: "world2!",
+		},
+		Repeat: &Bar{
 			ID:    "barID2",
 			Hello: "world2!",
 		},
@@ -1826,6 +1831,12 @@ func TestMarshalRelationship(t *testing.T) {
 			"bar": {
 				"data": {
 					"id": "barID",
+					"type": "bars"
+				}
+			},
+			"repeat": {
+				"data": {
+					"id": "barID2",
 					"type": "bars"
 				}
 			}
