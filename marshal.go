@@ -96,7 +96,7 @@ func marshalCompoundDocument(v interface{}, cd *CompoundDocument) ([]byte, error
 	for i := 0; i < values.Len(); i++ {
 		value := values.Index(i)
 		if value.Kind() != reflect.Ptr {
-			return nil, fmt.Errorf("v should be pointer or slice of pointers")
+			return nil, fmt.Errorf("document must be pointer or slice of pointers")
 		}
 		r := NewResource()
 		if err := iterateStruct(value.Interface(), func(value reflect.Value, memberType MemberType, memberNames ...string) error {
@@ -173,7 +173,7 @@ func marshalCompoundRelationship(value reflect.Value, d *document, r *Resource, 
 	for i := 0; i < value.Len(); i++ {
 		sValue := value.Index(i)
 		if sValue.Kind() != reflect.Ptr {
-			return fmt.Errorf("v should be pointer or slice of pointers")
+			return fmt.Errorf("relationship must be pointer or slice of pointers")
 		}
 		newIncl := NewResource()
 		newRel := NewRelationship()
@@ -265,8 +265,9 @@ func marshal(resource *Resource, memberType MemberType, memberNames []string, va
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
 		reflect.Uintptr:
 		search[memberName] = value.Interface()
-	default:
-		return fmt.Errorf("type: %+v, not supported, must implement custom marshaller", value.Type())
+		// TODO handle error/warning for unsupported types
+		// default:
+		// 	return fmt.Errorf("type: %+v, not supported, must implement custom marshaller", value.Type())
 	}
 	return nil
 }

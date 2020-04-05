@@ -2240,4 +2240,52 @@ func TestMarshalErrors2(t *testing.T) {
 	case wrongIDTypeInCompRelsInCompDocErr.Error() != wrongIDTypeInCompRelsInCompDocErrMsg:
 		t.Errorf("expected error: %s, got: %s", wrongIDTypeInCompRelsInCompDocErrMsg, wrongIDTypeInCompRelsInCompDocErr.Error())
 	}
+
+	// compound document should be pointer or slice of pointers
+	nonPointerSlice := []Sample{
+		Sample{
+			ID:      "sample-1",
+			Float64: 99.9,
+		},
+	}
+	nonPointerSliceErrMsg := "document must be pointer or slice of pointers"
+	_, nonPointerSliceErr := Marshal(&nonPointerSlice, nil)
+	switch {
+	case nonPointerSliceErr == nil:
+		t.Errorf("expected error: %s, but got no error", nonPointerSliceErr)
+	case nonPointerSliceErr.Error() != nonPointerSliceErrMsg:
+		t.Errorf("expected error: %s, got: %s", nonPointerSliceErrMsg, nonPointerSliceErr.Error())
+	}
+
+	// compound relationship should be pointer or slice of pointers
+	type NonPointerCompoundRel struct {
+		ID  string `jsonapi:"primary,tests"`
+		Bar string `jsonapi:"attributes,bar"`
+	}
+	type NonPointerCompoundRels struct {
+		ID   string                  `jsonapi:"primary,non_pointer_compound_rels"`
+		Foo  string                  `jsonapi:"attribute,foo"`
+		Rels []NonPointerCompoundRel `jsonapi:"relationship,rels"`
+	}
+	nonPointerCompoundRels := []*NonPointerCompoundRels{
+		&NonPointerCompoundRels{
+			ID:  "sample-1",
+			Foo: "foo",
+			Rels: []NonPointerCompoundRel{
+				NonPointerCompoundRel{
+					ID:  "rel-sample-1",
+					Bar: "bar",
+				},
+			},
+		},
+	}
+	nonPointerCompoundRelsErrMsg := "relationship must be pointer or slice of pointers"
+	a, nonPointerCompoundRelsErr := Marshal(&nonPointerCompoundRels, nil)
+	switch {
+	case nonPointerCompoundRelsErr == nil:
+		t.Errorf("expected error: %s, but got no error", nonPointerCompoundRelsErr)
+	case nonPointerCompoundRelsErr.Error() != nonPointerCompoundRelsErrMsg:
+		t.Errorf("expected error: %s, got: %s", nonPointerCompoundRelsErrMsg, nonPointerCompoundRelsErr.Error())
+	}
+	fmt.Println("here", string(a))
 }
