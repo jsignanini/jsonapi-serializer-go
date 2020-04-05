@@ -174,6 +174,7 @@ func TestUnmarshalInt(t *testing.T) {
 		ID  string `jsonapi:"primary,ints"`
 		Foo int    `jsonapi:"attribute,bar"`
 	}
+
 	valid := []byte(`{
 		"data": {
 			"id": "someID",
@@ -190,6 +191,7 @@ func TestUnmarshalInt(t *testing.T) {
 	if validTest.Foo != 99 {
 		t.Errorf("expected int: %d, got: %d", 99, validTest.Foo)
 	}
+
 	negative := []byte(`{
 		"data": {
 			"id": "someID",
@@ -304,6 +306,26 @@ func TestUnmarshalInts(t *testing.T) {
 	if maxOut.Int64 != math.MaxInt64 {
 		t.Errorf("expected int64 to be: %d, got: %d", math.MaxInt64, maxOut.Int64)
 	}
+
+	// test incorrectly sending a string instead of an int
+	wrongTypeOut := Sample{}
+	wrongTypeErr := "number has no digits"
+	wrongType := []byte(`{
+	"data": {
+		"id": "sample-1",
+		"type": "ints",
+		"attributes": {
+			"int": "wrong string"
+		}
+	}
+}`)
+	if err := Unmarshal(wrongType, &wrongTypeOut); err == nil {
+		t.Errorf("expected error: %s, got no error", wrongTypeErr)
+	} else {
+		if err.Error() != wrongTypeErr {
+			t.Errorf("expected error: %s, got: %s", wrongTypeErr, err.Error())
+		}
+	}
 }
 
 func TestUnmarshalUints(t *testing.T) {
@@ -353,7 +375,7 @@ func TestUnmarshalUints(t *testing.T) {
 		t.Errorf("expected uint64 to be: %d, got: %d", uint64(math.MaxUint64), maxOut.Uint64)
 	}
 
-	// test incorrectly sending a string instead of an int
+	// test incorrectly sending a string instead of an uint
 	wrongTypeOut := Sample{}
 	wrongTypeErr := "number has no digits"
 	wrongType := []byte(`{
