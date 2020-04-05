@@ -628,3 +628,43 @@ func TestUnmarshalMany(t *testing.T) {
 		t.Errorf("MetaFloat64 was incorrect, got: %f, want: %f.", s[1].MetaFloat64, 12121.2321223)
 	}
 }
+
+func TestUnmarshalErrors(t *testing.T) {
+	// unmarshal non-pointer
+	nonPointerErrMsg := "v must be pointer"
+	nonPointer := Sample{}
+	nonPointerErr := Unmarshal([]byte(""), nonPointer)
+	switch {
+	case nonPointerErr == nil:
+		t.Errorf("expected error: %s, but got no error", nonPointerErrMsg)
+	case nonPointerErr.Error() != nonPointerErrMsg:
+		t.Errorf("expected error: %s, got: %s", nonPointerErrMsg, nonPointerErr.Error())
+	}
+
+	// unmarsshal nil pointer
+	nilPointerErrMsg := "v must not be nil"
+	var nilPointer *Sample
+	nilPointerErr := Unmarshal([]byte(""), nilPointer)
+	switch {
+	case nilPointerErr == nil:
+		t.Errorf("expected error: %s, but got no error", nilPointerErrMsg)
+	case nilPointerErr.Error() != nilPointerErrMsg:
+		t.Errorf("expected error: %s, got: %s", nilPointerErrMsg, nilPointerErr.Error())
+	}
+
+	// malformed document json
+	malformedJSON := Sample{}
+	malformedJSONErr := Unmarshal([]byte("malformed"), &malformedJSON)
+	switch {
+	case malformedJSONErr == nil:
+		t.Error("expected malformed JSON to error out but got no error")
+	}
+
+	// malformed compound document json
+	malformedCompoundJSON := []*Sample{}
+	malformedCompoundJSONErr := Unmarshal([]byte("malformed compound"), &malformedCompoundJSON)
+	switch {
+	case malformedCompoundJSONErr == nil:
+		t.Error("expected malformed JSON to error out but got no error")
+	}
+}

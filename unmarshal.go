@@ -132,8 +132,6 @@ func unmarshal(resource *Resource, memberType MemberType, memberNames []string, 
 		return setUint(field, value)
 	case reflect.Float32, reflect.Float64:
 		field.SetFloat(value.Float())
-	default:
-		return fmt.Errorf("Type: %+v, not supported, must implement custom unmarshaller", field.Type())
 	}
 	return nil
 }
