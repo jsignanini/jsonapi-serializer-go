@@ -112,3 +112,4 @@ Outputs:
 - Standardize internal errors
 - Support non-string resource IDs
 - Show error or warning when parsing an unsupported builtin type (e.g.: `complex128`)
+- Handle top-level Links and resource-level links separatedly
