@@ -2159,6 +2159,7 @@ func TestMarshalErrors2(t *testing.T) {
 	type WrongIDTypeInRels struct {
 		ID           string         `jsonapi:"primary,wrong_id_type_in_rels"`
 		Foo          string         `jsonapi:"attribute,foo"`
+		WrongIDType  *WrongIDType   `jsonapi:"relationship,wrong_id_type"`
 		WrongIDTypes []*WrongIDType `jsonapi:"relationship,wrong_id_types"`
 	}
 	wrongIDTypeInRels := &WrongIDTypeInRels{
@@ -2178,5 +2179,45 @@ func TestMarshalErrors2(t *testing.T) {
 		t.Errorf("expected error: %s, but got no error", wrongIDTypeInRelsErrMsg)
 	case wrongIDTypeInRelsErr.Error() != wrongIDTypeInRelsErrMsg:
 		t.Errorf("expected error: %s, got: %s", wrongIDTypeInRelsErrMsg, wrongIDTypeInRelsErr.Error())
+	}
+
+	// wrong id type in relationships in compound document
+	wrongIDTypesInRels := &[]*WrongIDTypeInRels{
+		&WrongIDTypeInRels{
+			ID:  "wrong-id-type-in-rel-1",
+			Foo: "bar",
+			WrongIDType: &WrongIDType{
+				ID:  false,
+				Foo: "test",
+			},
+			WrongIDTypes: []*WrongIDType{
+				&WrongIDType{
+					ID:  true,
+					Foo: "bar",
+				},
+			},
+		},
+		&WrongIDTypeInRels{
+			ID:  "wrong-id-type-in-rel-2",
+			Foo: "bar",
+			WrongIDType: &WrongIDType{
+				ID:  false,
+				Foo: "test",
+			},
+			WrongIDTypes: []*WrongIDType{
+				&WrongIDType{
+					ID:  false,
+					Foo: "bar",
+				},
+			},
+		},
+	}
+	wrongIDTypesInRelsErrMsg := "ID must be a string, got bool"
+	_, wrongIDTypesInRelsErr := Marshal(wrongIDTypesInRels, nil)
+	switch {
+	case wrongIDTypesInRelsErr == nil:
+		t.Errorf("expected error: %s, but got no error", wrongIDTypesInRelsErrMsg)
+	case wrongIDTypesInRelsErr.Error() != wrongIDTypesInRelsErrMsg:
+		t.Errorf("expected error: %s, got: %s", wrongIDTypesInRelsErrMsg, wrongIDTypesInRelsErr.Error())
 	}
 }
