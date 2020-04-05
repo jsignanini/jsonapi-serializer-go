@@ -2072,3 +2072,100 @@ func TestMarshalRelationshipEmptyArray(t *testing.T) {
 		}
 	}
 }
+
+func TestMarshalErrors2(t *testing.T) {
+	// unmarshal non-pointer
+	nonPointerOrSliceErrMsg := "v must be pointer or slice"
+	nonPointerOrSlice := Sample{}
+	_, nonPointerOrSliceErr := Marshal(nonPointerOrSlice, nil)
+	switch {
+	case nonPointerOrSliceErr == nil:
+		t.Errorf("expected error: %s, but got no error", nonPointerOrSliceErrMsg)
+	case nonPointerOrSliceErr.Error() != nonPointerOrSliceErrMsg:
+		t.Errorf("expected error: %s, got: %s", nonPointerOrSliceErrMsg, nonPointerOrSliceErr.Error())
+	}
+
+	// missing type
+	type MissingType struct {
+		ID  string `jsonapi:"primary,"`
+		Foo string `jsonapi:"attribute,foo"`
+	}
+	missingType := &MissingType{
+		ID:  "missing-type-1",
+		Foo: "bar",
+	}
+	missmissingTypeErrMsg := "type must be set"
+	_, missmissingTypeErr := Marshal(missingType, nil)
+	switch {
+	case missmissingTypeErr == nil:
+		t.Errorf("expected error: %s, but got no error", missmissingTypeErrMsg)
+	case missmissingTypeErr.Error() != missmissingTypeErrMsg:
+		t.Errorf("expected error: %s, got: %s", missmissingTypeErrMsg, missmissingTypeErr.Error())
+	}
+
+	// wrong id type
+	type WrongIDType struct {
+		ID  bool   `jsonapi:"primary,wrong_id_types"`
+		Foo string `jsonapi:"attribute,foo"`
+	}
+	wrongIDType := &WrongIDType{
+		ID:  true,
+		Foo: "bar",
+	}
+	wrongIDTypeErrMsg := "ID must be a string, got bool"
+	_, wrongIDTypeErr := Marshal(wrongIDType, nil)
+	switch {
+	case wrongIDTypeErr == nil:
+		t.Errorf("expected error: %s, but got no error", wrongIDTypeErrMsg)
+	case wrongIDTypeErr.Error() != wrongIDTypeErrMsg:
+		t.Errorf("expected error: %s, got: %s", wrongIDTypeErrMsg, wrongIDTypeErr.Error())
+	}
+
+	// wrong id type in relationship
+	type WrongIDTypeInRel struct {
+		ID          string       `jsonapi:"primary,wrong_id_type_in_rels"`
+		Foo         string       `jsonapi:"attribute,foo"`
+		WrongIDType *WrongIDType `jsonapi:"relationship,wrong_id_type"`
+	}
+	wrongIDTypeInRel := &WrongIDTypeInRel{
+		ID:  "wrong-id-type-in-rel-1",
+		Foo: "bar",
+		WrongIDType: &WrongIDType{
+			ID:  false,
+			Foo: "bar",
+		},
+	}
+	wrongIDTypeInRelErrMsg := "ID must be a string, got bool"
+	_, wrongIDTypeInRelErr := Marshal(wrongIDTypeInRel, nil)
+	switch {
+	case wrongIDTypeInRelErr == nil:
+		t.Errorf("expected error: %s, but got no error", wrongIDTypeInRelErrMsg)
+	case wrongIDTypeInRelErr.Error() != wrongIDTypeInRelErrMsg:
+		t.Errorf("expected error: %s, got: %s", wrongIDTypeInRelErrMsg, wrongIDTypeInRelErr.Error())
+	}
+
+	// wrong id type in compound relationship
+	type WrongIDTypeInRels struct {
+		ID           string         `jsonapi:"primary,wrong_id_type_in_rels"`
+		Foo          string         `jsonapi:"attribute,foo"`
+		WrongIDTypes []*WrongIDType `jsonapi:"relationship,wrong_id_types"`
+	}
+	wrongIDTypeInRels := &WrongIDTypeInRels{
+		ID:  "wrong-id-type-in-rel-1",
+		Foo: "bar",
+		WrongIDTypes: []*WrongIDType{
+			&WrongIDType{
+				ID:  false,
+				Foo: "bar",
+			},
+		},
+	}
+	wrongIDTypeInRelsErrMsg := "ID must be a string, got bool"
+	_, wrongIDTypeInRelsErr := Marshal(wrongIDTypeInRels, nil)
+	switch {
+	case wrongIDTypeInRelsErr == nil:
+		t.Errorf("expected error: %s, but got no error", wrongIDTypeInRelsErrMsg)
+	case wrongIDTypeInRelsErr.Error() != wrongIDTypeInRelsErrMsg:
+		t.Errorf("expected error: %s, got: %s", wrongIDTypeInRelsErrMsg, wrongIDTypeInRelsErr.Error())
+	}
+}
