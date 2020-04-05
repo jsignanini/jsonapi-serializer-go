@@ -560,11 +560,11 @@ func TestMarshalCompoundWithCompoundRelationships(t *testing.T) {
 			ID:    "article-1",
 			Title: "Hello world 1!",
 			Authors: []*Author{
-				&Author{
+				{
 					ID:   "author-1",
 					Name: "John",
 				},
-				&Author{
+				{
 					ID:   "author-3",
 					Name: "Fred",
 				},
@@ -574,11 +574,11 @@ func TestMarshalCompoundWithCompoundRelationships(t *testing.T) {
 			ID:    "article-2",
 			Title: "Hello world 2!",
 			Authors: []*Author{
-				&Author{
+				{
 					ID:   "author-2",
 					Name: "Juan",
 				},
-				&Author{
+				{
 					ID:   "author-3",
 					Name: "Fred",
 				},
@@ -1946,11 +1946,11 @@ func TestMarshalRelationshipArray(t *testing.T) {
 		ID:  "someID",
 		Foo: "bar",
 		Bars: []*Bar{
-			&Bar{
+			{
 				ID:    "barID1.1",
 				Hello: "world1.1!",
 			},
-			&Bar{
+			{
 				ID:    "barID1.2",
 				Hello: "world1.2!",
 			},
@@ -2166,7 +2166,7 @@ func TestMarshalErrors2(t *testing.T) {
 		ID:  "wrong-id-type-in-rel-1",
 		Foo: "bar",
 		WrongIDTypes: []*WrongIDType{
-			&WrongIDType{
+			{
 				ID:  false,
 				Foo: "bar",
 			},
@@ -2183,7 +2183,7 @@ func TestMarshalErrors2(t *testing.T) {
 
 	// wrong id type in relationships in compound document
 	wrongIDTypesInRels := &[]*WrongIDTypeInRels{
-		&WrongIDTypeInRels{
+		{
 			ID:  "wrong-id-type-in-rel-1",
 			Foo: "bar",
 			WrongIDType: &WrongIDType{
@@ -2191,7 +2191,7 @@ func TestMarshalErrors2(t *testing.T) {
 				Foo: "test",
 			},
 		},
-		&WrongIDTypeInRels{
+		{
 			ID:  "wrong-id-type-in-rel-2",
 			Foo: "bar",
 			WrongIDType: &WrongIDType{
@@ -2211,21 +2211,21 @@ func TestMarshalErrors2(t *testing.T) {
 
 	// wrong id type in compound relationships in compound document
 	wrongIDTypeInCompRelsInCompDoc := &[]*WrongIDTypeInRels{
-		&WrongIDTypeInRels{
+		{
 			ID:  "wrong-id-type-in-rel-1",
 			Foo: "bar",
 			WrongIDTypes: []*WrongIDType{
-				&WrongIDType{
+				{
 					ID:  true,
 					Foo: "bar",
 				},
 			},
 		},
-		&WrongIDTypeInRels{
+		{
 			ID:  "wrong-id-type-in-rel-2",
 			Foo: "bar",
 			WrongIDTypes: []*WrongIDType{
-				&WrongIDType{
+				{
 					ID:  false,
 					Foo: "bar",
 				},
@@ -2243,7 +2243,7 @@ func TestMarshalErrors2(t *testing.T) {
 
 	// compound document should be pointer or slice of pointers
 	nonPointerSlice := []Sample{
-		Sample{
+		{
 			ID:      "sample-1",
 			Float64: 99.9,
 		},
@@ -2268,11 +2268,11 @@ func TestMarshalErrors2(t *testing.T) {
 		Rels []NonPointerCompoundRel `jsonapi:"relationship,rels"`
 	}
 	nonPointerCompoundRels := []*NonPointerCompoundRels{
-		&NonPointerCompoundRels{
+		{
 			ID:  "sample-1",
 			Foo: "foo",
 			Rels: []NonPointerCompoundRel{
-				NonPointerCompoundRel{
+				{
 					ID:  "rel-sample-1",
 					Bar: "bar",
 				},
