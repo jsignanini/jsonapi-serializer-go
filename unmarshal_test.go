@@ -567,6 +567,33 @@ func TestUnmarshalCustomTypePtr(t *testing.T) {
 	}
 }
 
+func TestUnmarshalString(t *testing.T) {
+	type Sample struct {
+		ID     string `jsonapi:"primary,strings"`
+		String string `jsonapi:"attribute,string"`
+	}
+	wrongTypeErrMsg := "invalid value for field string"
+	wrongTypeOut := Sample{}
+	wrongType := []byte(`{
+	"data": {
+		"id": "string-id",
+		"type": "strings",
+		"attributes": {
+			"string": {
+				"foo": "bar"
+			}
+		}
+	}
+}`)
+	wrongTypeErr := Unmarshal(wrongType, &wrongTypeOut)
+	switch {
+	case wrongTypeErr == nil:
+		t.Errorf("expected error: %s, but got no error", wrongTypeErrMsg)
+	case wrongTypeErr.Error() != wrongTypeErrMsg:
+		t.Errorf("expected error: %s, got: %s", wrongTypeErrMsg, wrongTypeErr.Error())
+	}
+}
+
 func TestUnmarshal(t *testing.T) {
 	input := []byte(`{
 	"data": {

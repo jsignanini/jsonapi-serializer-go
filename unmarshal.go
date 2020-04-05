@@ -125,7 +125,7 @@ func unmarshal(resource *Resource, memberType MemberType, memberNames []string, 
 	case reflect.Bool:
 		return setBool(field, value)
 	case reflect.String:
-		field.SetString(value.String())
+		return setString(field, value)
 	case reflect.Int:
 		fallthrough
 	case reflect.Int8:
@@ -203,6 +203,14 @@ func setBool(field, value reflect.Value) error {
 		return fmt.Errorf("invalid value for field %s", field.Type().Name())
 	}
 	field.SetBool(value.Bool())
+	return nil
+}
+
+func setString(field, value reflect.Value) error {
+	if _, ok := value.Interface().(string); !ok {
+		return fmt.Errorf("invalid value for field %s", field.Type().Name())
+	}
+	field.SetString(value.String())
 	return nil
 }
 
