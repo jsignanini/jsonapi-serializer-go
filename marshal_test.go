@@ -392,13 +392,17 @@ func TestMarshalCustomTypeStringPtr(t *testing.T) {
 
 func TestMarshalCompound(t *testing.T) {
 	type TestCompound struct {
-		ID  string `jsonapi:"primary,test_compounds"`
-		Foo string `jsonapi:"attribute,bar"`
+		ID    string `jsonapi:"primary,test_compounds"`
+		Foo   string `jsonapi:"attribute,bar"`
+		Links Links  `jsonapi:"links,self"`
 	}
 	tcs := []*TestCompound{
 		{
 			ID:  "someID1",
 			Foo: "hello",
+			Links: Links{
+				"self": "/self/link",
+			},
 		},
 		{
 			ID:  "someID2",
@@ -412,6 +416,9 @@ func TestMarshalCompound(t *testing.T) {
 			"type": "test_compounds",
 			"attributes": {
 				"bar": "hello"
+			},
+			"links": {
+				"self": "/self/link"
 			}
 		},
 		{
@@ -424,9 +431,22 @@ func TestMarshalCompound(t *testing.T) {
 	],
 	"jsonapi": {
 		"version": "1.0"
+	},
+	"meta": {
+		"hello": "world!"
+	},
+	"links": {
+		"self": "/foo/bar"
 	}
 }`)
-	if b, err := Marshal(&tcs, nil); err != nil {
+	if b, err := Marshal(&tcs, &MarshalParams{
+		Meta: &Meta{
+			"hello": "world!",
+		},
+		Links: &Links{
+			"self": "/foo/bar",
+		},
+	}); err != nil {
 		t.Errorf(err.Error())
 	} else {
 		if bytes.Compare(expected, b) != 0 {
@@ -1776,6 +1796,7 @@ func TestMarshalRelationship(t *testing.T) {
 		Foo     string `jsonapi:"attribute,foo"`
 		Bar     *Bar   `jsonapi:"relationship,bar"`
 		Another *Bar   `jsonapi:"relationship,another"`
+		Repeat  *Bar   `jsonapi:"relationship,repeat"`
 	}
 	test := TestRelationship{
 		ID:  "someID",
@@ -1785,6 +1806,10 @@ func TestMarshalRelationship(t *testing.T) {
 			Hello: "world!",
 		},
 		Another: &Bar{
+			ID:    "barID2",
+			Hello: "world2!",
+		},
+		Repeat: &Bar{
 			ID:    "barID2",
 			Hello: "world2!",
 		},
@@ -1806,6 +1831,12 @@ func TestMarshalRelationship(t *testing.T) {
 			"bar": {
 				"data": {
 					"id": "barID",
+					"type": "bars"
+				}
+			},
+			"repeat": {
+				"data": {
+					"id": "barID2",
 					"type": "bars"
 				}
 			}
@@ -2050,5 +2081,163 @@ func TestMarshalRelationshipEmptyArray(t *testing.T) {
 		if bytes.Compare(got, expected) != 0 {
 			t.Errorf("Expected:\n%s\nGot:\n%s\n", string(expected), string(got))
 		}
+	}
+}
+
+func TestMarshalErrors2(t *testing.T) {
+	// unmarshal non-pointer
+	nonPointerOrSliceErrMsg := "v must be pointer or slice"
+	nonPointerOrSlice := Sample{}
+	_, nonPointerOrSliceErr := Marshal(nonPointerOrSlice, nil)
+	switch {
+	case nonPointerOrSliceErr == nil:
+		t.Errorf("expected error: %s, but got no error", nonPointerOrSliceErrMsg)
+	case nonPointerOrSliceErr.Error() != nonPointerOrSliceErrMsg:
+		t.Errorf("expected error: %s, got: %s", nonPointerOrSliceErrMsg, nonPointerOrSliceErr.Error())
+	}
+
+	// missing type
+	type MissingType struct {
+		ID  string `jsonapi:"primary,"`
+		Foo string `jsonapi:"attribute,foo"`
+	}
+	missingType := &MissingType{
+		ID:  "missing-type-1",
+		Foo: "bar",
+	}
+	missmissingTypeErrMsg := "type must be set"
+	_, missmissingTypeErr := Marshal(missingType, nil)
+	switch {
+	case missmissingTypeErr == nil:
+		t.Errorf("expected error: %s, but got no error", missmissingTypeErrMsg)
+	case missmissingTypeErr.Error() != missmissingTypeErrMsg:
+		t.Errorf("expected error: %s, got: %s", missmissingTypeErrMsg, missmissingTypeErr.Error())
+	}
+
+	// wrong id type
+	type WrongIDType struct {
+		ID  bool   `jsonapi:"primary,wrong_id_types"`
+		Foo string `jsonapi:"attribute,foo"`
+	}
+	wrongIDType := &WrongIDType{
+		ID:  true,
+		Foo: "bar",
+	}
+	wrongIDTypeErrMsg := "ID must be a string, got bool"
+	_, wrongIDTypeErr := Marshal(wrongIDType, nil)
+	switch {
+	case wrongIDTypeErr == nil:
+		t.Errorf("expected error: %s, but got no error", wrongIDTypeErrMsg)
+	case wrongIDTypeErr.Error() != wrongIDTypeErrMsg:
+		t.Errorf("expected error: %s, got: %s", wrongIDTypeErrMsg, wrongIDTypeErr.Error())
+	}
+
+	// wrong id type in relationship
+	type WrongIDTypeInRel struct {
+		ID          string       `jsonapi:"primary,wrong_id_type_in_rels"`
+		Foo         string       `jsonapi:"attribute,foo"`
+		WrongIDType *WrongIDType `jsonapi:"relationship,wrong_id_type"`
+	}
+	wrongIDTypeInRel := &WrongIDTypeInRel{
+		ID:  "wrong-id-type-in-rel-1",
+		Foo: "bar",
+		WrongIDType: &WrongIDType{
+			ID:  false,
+			Foo: "bar",
+		},
+	}
+	wrongIDTypeInRelErrMsg := "ID must be a string, got bool"
+	_, wrongIDTypeInRelErr := Marshal(wrongIDTypeInRel, nil)
+	switch {
+	case wrongIDTypeInRelErr == nil:
+		t.Errorf("expected error: %s, but got no error", wrongIDTypeInRelErrMsg)
+	case wrongIDTypeInRelErr.Error() != wrongIDTypeInRelErrMsg:
+		t.Errorf("expected error: %s, got: %s", wrongIDTypeInRelErrMsg, wrongIDTypeInRelErr.Error())
+	}
+
+	// wrong id type in compound relationship
+	type WrongIDTypeInRels struct {
+		ID           string         `jsonapi:"primary,wrong_id_type_in_rels"`
+		Foo          string         `jsonapi:"attribute,foo"`
+		WrongIDType  *WrongIDType   `jsonapi:"relationship,wrong_id_type"`
+		WrongIDTypes []*WrongIDType `jsonapi:"relationship,wrong_id_types"`
+	}
+	wrongIDTypeInRels := &WrongIDTypeInRels{
+		ID:  "wrong-id-type-in-rel-1",
+		Foo: "bar",
+		WrongIDTypes: []*WrongIDType{
+			&WrongIDType{
+				ID:  false,
+				Foo: "bar",
+			},
+		},
+	}
+	wrongIDTypeInRelsErrMsg := "ID must be a string, got bool"
+	_, wrongIDTypeInRelsErr := Marshal(wrongIDTypeInRels, nil)
+	switch {
+	case wrongIDTypeInRelsErr == nil:
+		t.Errorf("expected error: %s, but got no error", wrongIDTypeInRelsErrMsg)
+	case wrongIDTypeInRelsErr.Error() != wrongIDTypeInRelsErrMsg:
+		t.Errorf("expected error: %s, got: %s", wrongIDTypeInRelsErrMsg, wrongIDTypeInRelsErr.Error())
+	}
+
+	// wrong id type in relationships in compound document
+	wrongIDTypesInRels := &[]*WrongIDTypeInRels{
+		&WrongIDTypeInRels{
+			ID:  "wrong-id-type-in-rel-1",
+			Foo: "bar",
+			WrongIDType: &WrongIDType{
+				ID:  false,
+				Foo: "test",
+			},
+		},
+		&WrongIDTypeInRels{
+			ID:  "wrong-id-type-in-rel-2",
+			Foo: "bar",
+			WrongIDType: &WrongIDType{
+				ID:  false,
+				Foo: "test",
+			},
+		},
+	}
+	wrongIDTypesInRelsErrMsg := "ID must be a string, got bool"
+	_, wrongIDTypesInRelsErr := Marshal(wrongIDTypesInRels, nil)
+	switch {
+	case wrongIDTypesInRelsErr == nil:
+		t.Errorf("expected error: %s, but got no error", wrongIDTypesInRelsErrMsg)
+	case wrongIDTypesInRelsErr.Error() != wrongIDTypesInRelsErrMsg:
+		t.Errorf("expected error: %s, got: %s", wrongIDTypesInRelsErrMsg, wrongIDTypesInRelsErr.Error())
+	}
+
+	// wrong id type in compound relationships in compound document
+	wrongIDTypeInCompRelsInCompDoc := &[]*WrongIDTypeInRels{
+		&WrongIDTypeInRels{
+			ID:  "wrong-id-type-in-rel-1",
+			Foo: "bar",
+			WrongIDTypes: []*WrongIDType{
+				&WrongIDType{
+					ID:  true,
+					Foo: "bar",
+				},
+			},
+		},
+		&WrongIDTypeInRels{
+			ID:  "wrong-id-type-in-rel-2",
+			Foo: "bar",
+			WrongIDTypes: []*WrongIDType{
+				&WrongIDType{
+					ID:  false,
+					Foo: "bar",
+				},
+			},
+		},
+	}
+	wrongIDTypeInCompRelsInCompDocErrMsg := "ID must be a string, got bool"
+	_, wrongIDTypeInCompRelsInCompDocErr := Marshal(wrongIDTypeInCompRelsInCompDoc, nil)
+	switch {
+	case wrongIDTypeInCompRelsInCompDocErr == nil:
+		t.Errorf("expected error: %s, but got no error", wrongIDTypeInCompRelsInCompDocErrMsg)
+	case wrongIDTypeInCompRelsInCompDocErr.Error() != wrongIDTypeInCompRelsInCompDocErrMsg:
+		t.Errorf("expected error: %s, got: %s", wrongIDTypeInCompRelsInCompDocErrMsg, wrongIDTypeInCompRelsInCompDocErr.Error())
 	}
 }

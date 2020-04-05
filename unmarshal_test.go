@@ -92,6 +92,26 @@ func TestUnmarshalBool(t *testing.T) {
 	if !expectedFalse.IsTrue {
 		t.Errorf("IsTrue was incorrect, got: %t, want: %t.", expectedFalse.IsTrue, false)
 	}
+
+	// test incorrectly sending a string instead of an int
+	wrongTypeOut := TestBool{}
+	wrongTypeErr := "invalid value for field bool"
+	wrongType := []byte(`{
+		"data": {
+			"id": "sample-1",
+			"type": "floats",
+			"attributes": {
+				"is_true": "wrong string"
+			}
+		}
+	}`)
+	if err := Unmarshal(wrongType, &wrongTypeOut); err == nil {
+		t.Errorf("expected error: %s, got no error", wrongTypeErr)
+	} else {
+		if err.Error() != wrongTypeErr {
+			t.Errorf("expected error: %s, got: %s", wrongTypeErr, err.Error())
+		}
+	}
 }
 
 func TestUnmarshalBoolPtr(t *testing.T) {
@@ -154,6 +174,7 @@ func TestUnmarshalInt(t *testing.T) {
 		ID  string `jsonapi:"primary,ints"`
 		Foo int    `jsonapi:"attribute,bar"`
 	}
+
 	valid := []byte(`{
 		"data": {
 			"id": "someID",
@@ -170,6 +191,7 @@ func TestUnmarshalInt(t *testing.T) {
 	if validTest.Foo != 99 {
 		t.Errorf("expected int: %d, got: %d", 99, validTest.Foo)
 	}
+
 	negative := []byte(`{
 		"data": {
 			"id": "someID",
@@ -284,6 +306,26 @@ func TestUnmarshalInts(t *testing.T) {
 	if maxOut.Int64 != math.MaxInt64 {
 		t.Errorf("expected int64 to be: %d, got: %d", math.MaxInt64, maxOut.Int64)
 	}
+
+	// test incorrectly sending a string instead of an int
+	wrongTypeOut := Sample{}
+	wrongTypeErr := "number has no digits"
+	wrongType := []byte(`{
+	"data": {
+		"id": "sample-1",
+		"type": "ints",
+		"attributes": {
+			"int": "wrong string"
+		}
+	}
+}`)
+	if err := Unmarshal(wrongType, &wrongTypeOut); err == nil {
+		t.Errorf("expected error: %s, got no error", wrongTypeErr)
+	} else {
+		if err.Error() != wrongTypeErr {
+			t.Errorf("expected error: %s, got: %s", wrongTypeErr, err.Error())
+		}
+	}
 }
 
 func TestUnmarshalUints(t *testing.T) {
@@ -333,7 +375,7 @@ func TestUnmarshalUints(t *testing.T) {
 		t.Errorf("expected uint64 to be: %d, got: %d", uint64(math.MaxUint64), maxOut.Uint64)
 	}
 
-	// test incorrectly sending a string instead of an int
+	// test incorrectly sending a string instead of an uint
 	wrongTypeOut := Sample{}
 	wrongTypeErr := "number has no digits"
 	wrongType := []byte(`{
@@ -342,6 +384,59 @@ func TestUnmarshalUints(t *testing.T) {
 		"type": "uints",
 		"attributes": {
 			"uint": "wrong string"
+		}
+	}
+}`)
+	if err := Unmarshal(wrongType, &wrongTypeOut); err == nil {
+		t.Errorf("expected error: %s, got no error", wrongTypeErr)
+	} else {
+		if err.Error() != wrongTypeErr {
+			t.Errorf("expected error: %s, got: %s", wrongTypeErr, err.Error())
+		}
+	}
+}
+
+func TestUnmarshalFloats(t *testing.T) {
+	type Sample struct {
+		ID      string  `jsonapi:"primary,uints"`
+		Float32 float32 `jsonapi:"attribute,float32"`
+		Float64 float64 `jsonapi:"attribute,float64"`
+	}
+
+	// test maximums
+	maxOut := Sample{}
+	max := []byte(fmt.Sprintf(`{
+	"data": {
+		"id": "sample-1",
+		"type": "floats",
+		"attributes": {
+			"float32": %f,
+			"float64": %f
+		}
+	}
+}`, math.MaxFloat32, math.MaxFloat64))
+	if err := Unmarshal(max, &maxOut); err != nil {
+		t.Errorf(err.Error())
+	}
+	if maxOut.ID != "sample-1" {
+		t.Errorf("expected id to be: %s, got: %s", "sample-1", maxOut.ID)
+	}
+	if maxOut.Float32 != math.MaxFloat32 {
+		t.Errorf("expected float32 to be: %f, got: %f", math.MaxFloat32, maxOut.Float32)
+	}
+	if maxOut.Float64 != math.MaxFloat64 {
+		t.Errorf("expected float64 to be: %f, got: %f", math.MaxFloat64, maxOut.Float64)
+	}
+
+	// test incorrectly sending a string instead of a float
+	wrongTypeOut := Sample{}
+	wrongTypeErr := "number has no digits"
+	wrongType := []byte(`{
+	"data": {
+		"id": "sample-1",
+		"type": "floats",
+		"attributes": {
+			"float32": "wrong string"
 		}
 	}
 }`)
@@ -494,6 +589,33 @@ func TestUnmarshalCustomTypePtr(t *testing.T) {
 	}
 }
 
+func TestUnmarshalString(t *testing.T) {
+	type Sample struct {
+		ID     string `jsonapi:"primary,strings"`
+		String string `jsonapi:"attribute,string"`
+	}
+	wrongTypeErrMsg := "invalid value for field string"
+	wrongTypeOut := Sample{}
+	wrongType := []byte(`{
+	"data": {
+		"id": "string-id",
+		"type": "strings",
+		"attributes": {
+			"string": {
+				"foo": "bar"
+			}
+		}
+	}
+}`)
+	wrongTypeErr := Unmarshal(wrongType, &wrongTypeOut)
+	switch {
+	case wrongTypeErr == nil:
+		t.Errorf("expected error: %s, but got no error", wrongTypeErrMsg)
+	case wrongTypeErr.Error() != wrongTypeErrMsg:
+		t.Errorf("expected error: %s, got: %s", wrongTypeErrMsg, wrongTypeErr.Error())
+	}
+}
+
 func TestUnmarshal(t *testing.T) {
 	input := []byte(`{
 	"data": {
@@ -626,5 +748,45 @@ func TestUnmarshalMany(t *testing.T) {
 	}
 	if s[1].MetaFloat64 != 12121.2321223 {
 		t.Errorf("MetaFloat64 was incorrect, got: %f, want: %f.", s[1].MetaFloat64, 12121.2321223)
+	}
+}
+
+func TestUnmarshalErrors(t *testing.T) {
+	// unmarshal non-pointer
+	nonPointerErrMsg := "v must be pointer"
+	nonPointer := Sample{}
+	nonPointerErr := Unmarshal([]byte(""), nonPointer)
+	switch {
+	case nonPointerErr == nil:
+		t.Errorf("expected error: %s, but got no error", nonPointerErrMsg)
+	case nonPointerErr.Error() != nonPointerErrMsg:
+		t.Errorf("expected error: %s, got: %s", nonPointerErrMsg, nonPointerErr.Error())
+	}
+
+	// unmarsshal nil pointer
+	nilPointerErrMsg := "v must not be nil"
+	var nilPointer *Sample
+	nilPointerErr := Unmarshal([]byte(""), nilPointer)
+	switch {
+	case nilPointerErr == nil:
+		t.Errorf("expected error: %s, but got no error", nilPointerErrMsg)
+	case nilPointerErr.Error() != nilPointerErrMsg:
+		t.Errorf("expected error: %s, got: %s", nilPointerErrMsg, nilPointerErr.Error())
+	}
+
+	// malformed document json
+	malformedJSON := Sample{}
+	malformedJSONErr := Unmarshal([]byte("malformed"), &malformedJSON)
+	switch {
+	case malformedJSONErr == nil:
+		t.Error("expected malformed JSON to error out but got no error")
+	}
+
+	// malformed compound document json
+	malformedCompoundJSON := []*Sample{}
+	malformedCompoundJSONErr := Unmarshal([]byte("malformed compound"), &malformedCompoundJSON)
+	switch {
+	case malformedCompoundJSONErr == nil:
+		t.Error("expected malformed JSON to error out but got no error")
 	}
 }

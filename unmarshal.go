@@ -123,17 +123,35 @@ func unmarshal(resource *Resource, memberType MemberType, memberNames []string, 
 	// set values by kind
 	switch field.Kind() {
 	case reflect.Bool:
-		field.SetBool(value.Bool())
+		return setBool(field, value)
 	case reflect.String:
-		field.SetString(value.String())
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return setString(field, value)
+	case reflect.Int:
+		fallthrough
+	case reflect.Int8:
+		fallthrough
+	case reflect.Int16:
+		fallthrough
+	case reflect.Int32:
+		fallthrough
+	case reflect.Int64:
 		return setInt(field, value)
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+	case reflect.Uint:
+		fallthrough
+	case reflect.Uint8:
+		fallthrough
+	case reflect.Uint16:
+		fallthrough
+	case reflect.Uint32:
+		fallthrough
+	case reflect.Uint64:
+		fallthrough
+	case reflect.Uintptr:
 		return setUint(field, value)
-	case reflect.Float32, reflect.Float64:
-		field.SetFloat(value.Float())
-	default:
-		return fmt.Errorf("Type: %+v, not supported, must implement custom unmarshaller", field.Type())
+	case reflect.Float32:
+		fallthrough
+	case reflect.Float64:
+		return setFloat(field, value)
 	}
 	return nil
 }
@@ -169,6 +187,30 @@ func setUint(field, value reflect.Value) error {
 	}
 	ui, _ := bf.Uint64()
 	field.SetUint(ui)
+	return nil
+}
+
+func setFloat(field, value reflect.Value) error {
+	if _, ok := value.Interface().(float64); !ok {
+		return fmt.Errorf("number has no digits")
+	}
+	field.SetFloat(value.Float())
+	return nil
+}
+
+func setBool(field, value reflect.Value) error {
+	if _, ok := value.Interface().(bool); !ok {
+		return fmt.Errorf("invalid value for field %s", field.Type().Name())
+	}
+	field.SetBool(value.Bool())
+	return nil
+}
+
+func setString(field, value reflect.Value) error {
+	if _, ok := value.Interface().(string); !ok {
+		return fmt.Errorf("invalid value for field %s", field.Type().Name())
+	}
+	field.SetString(value.String())
 	return nil
 }
 
