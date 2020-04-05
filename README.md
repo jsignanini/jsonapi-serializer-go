@@ -5,6 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/jsignanini/jsonapi-serializer-go)](https://goreportcard.com/report/github.com/jsignanini/jsonapi-serializer-go)
 [![Coverage Status](https://coveralls.io/repos/github/jsignanini/jsonapi-serializer-go/badge.svg?branch=master)](https://coveralls.io/github/jsignanini/jsonapi-serializer-go?branch=master)
 
+
 ## Installation
 Install jsonapi-serializer-go with:
 ```sh
@@ -15,6 +16,7 @@ Then, import it using:
 ```go
 import "github.com/jsignanini/jsonapi-serializer-go"
 ```
+
 
 ## Usage
 
@@ -101,9 +103,12 @@ Outputs:
 }
 ```
 
-### TODOs
+
+## TODOs
 
 - Optionally validate jsonapi spec
 - Optionally set jsonapi settings (e.g.: spec version, error/warning on document validation, etc.)
 - Support omitempty tag `jsonapi:"attribute,name,omitempty"`
-
+- Standardize internal errors
+- Support non-string resource IDs
+- Show error or warning when parsing an unsupported builtin type (e.g.: `complex128`)
