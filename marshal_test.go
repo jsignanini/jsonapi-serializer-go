@@ -424,9 +424,22 @@ func TestMarshalCompound(t *testing.T) {
 	],
 	"jsonapi": {
 		"version": "1.0"
+	},
+	"meta": {
+		"hello": "world!"
+	},
+	"links": {
+		"self": "/foo/bar"
 	}
 }`)
-	if b, err := Marshal(&tcs, nil); err != nil {
+	if b, err := Marshal(&tcs, &MarshalParams{
+		Meta: &Meta{
+			"hello": "world!",
+		},
+		Links: &Links{
+			"self": "/foo/bar",
+		},
+	}); err != nil {
 		t.Errorf(err.Error())
 	} else {
 		if bytes.Compare(expected, b) != 0 {
