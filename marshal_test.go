@@ -2190,12 +2190,6 @@ func TestMarshalErrors2(t *testing.T) {
 				ID:  false,
 				Foo: "test",
 			},
-			WrongIDTypes: []*WrongIDType{
-				&WrongIDType{
-					ID:  true,
-					Foo: "bar",
-				},
-			},
 		},
 		&WrongIDTypeInRels{
 			ID:  "wrong-id-type-in-rel-2",
@@ -2203,12 +2197,6 @@ func TestMarshalErrors2(t *testing.T) {
 			WrongIDType: &WrongIDType{
 				ID:  false,
 				Foo: "test",
-			},
-			WrongIDTypes: []*WrongIDType{
-				&WrongIDType{
-					ID:  false,
-					Foo: "bar",
-				},
 			},
 		},
 	}
@@ -2219,5 +2207,37 @@ func TestMarshalErrors2(t *testing.T) {
 		t.Errorf("expected error: %s, but got no error", wrongIDTypesInRelsErrMsg)
 	case wrongIDTypesInRelsErr.Error() != wrongIDTypesInRelsErrMsg:
 		t.Errorf("expected error: %s, got: %s", wrongIDTypesInRelsErrMsg, wrongIDTypesInRelsErr.Error())
+	}
+
+	// wrong id type in compound relationships in compound document
+	wrongIDTypeInCompRelsInCompDoc := &[]*WrongIDTypeInRels{
+		&WrongIDTypeInRels{
+			ID:  "wrong-id-type-in-rel-1",
+			Foo: "bar",
+			WrongIDTypes: []*WrongIDType{
+				&WrongIDType{
+					ID:  true,
+					Foo: "bar",
+				},
+			},
+		},
+		&WrongIDTypeInRels{
+			ID:  "wrong-id-type-in-rel-2",
+			Foo: "bar",
+			WrongIDTypes: []*WrongIDType{
+				&WrongIDType{
+					ID:  false,
+					Foo: "bar",
+				},
+			},
+		},
+	}
+	wrongIDTypeInCompRelsInCompDocErrMsg := "ID must be a string, got bool"
+	_, wrongIDTypeInCompRelsInCompDocErr := Marshal(wrongIDTypeInCompRelsInCompDoc, nil)
+	switch {
+	case wrongIDTypeInCompRelsInCompDocErr == nil:
+		t.Errorf("expected error: %s, but got no error", wrongIDTypeInCompRelsInCompDocErrMsg)
+	case wrongIDTypeInCompRelsInCompDocErr.Error() != wrongIDTypeInCompRelsInCompDocErrMsg:
+		t.Errorf("expected error: %s, got: %s", wrongIDTypeInCompRelsInCompDocErrMsg, wrongIDTypeInCompRelsInCompDocErr.Error())
 	}
 }
