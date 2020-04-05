@@ -6,7 +6,7 @@ import (
 )
 
 func TestIterateStruct(t *testing.T) {
-	shimIterFunc := iterFunc(func(value reflect.Value, memberType MemberType, memberNames ...string) error { return nil })
+	shimIterFunc := iterFunc(func(value reflect.Value, memberType memberType, memberNames ...string) error { return nil })
 	shimMemberNames := []string{}
 
 	// test incorrectly passing a non pointer

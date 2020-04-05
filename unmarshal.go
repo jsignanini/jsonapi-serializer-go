@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// Unmarshal parses the JSON:API-encoded data and stores the result in the value pointed to by v.
 func Unmarshal(data []byte, v interface{}) error {
 	rType := reflect.TypeOf(v)
 	rValue := reflect.ValueOf(v)
@@ -29,21 +30,24 @@ func Unmarshal(data []byte, v interface{}) error {
 		isSlice = true
 	}
 
+	// handle compound document
 	if isSlice {
 		document := NewCompoundDocument(nil)
 		if err := json.Unmarshal(data, document); err != nil {
 			return err
 		}
 		return unmarshalCompoundDocument(v, document)
-	} else {
-		document := NewDocument(nil)
-		if err := json.Unmarshal(data, document); err != nil {
-			return err
-		}
-		return unmarshalDocument(v, document)
 	}
+
+	// handle single document
+	document := NewDocument(nil)
+	if err := json.Unmarshal(data, document); err != nil {
+		return err
+	}
+	return unmarshalDocument(v, document)
 }
 
+// RegisterUnmarshaler register a new unmarshaler function for type t.
 func RegisterUnmarshaler(t reflect.Type, u unmarshalerFunc) {
 	customUnmarshalers[t] = u
 }
@@ -56,10 +60,10 @@ func unmarshalCompoundDocument(v interface{}, cd *CompoundDocument) error {
 	rValue := reflect.ValueOf(v)
 	for _, resource := range cd.Data {
 		v2 := reflect.New(rValue.Elem().Type().Elem()).Interface()
-		if err := iterateStruct(v2, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
+		if err := iterateStruct(v2, func(value reflect.Value, memberType memberType, memberNames ...string) error {
 			fieldKind := value.Kind()
 			// TODO this sets ID for all nexted primary tag fields
-			if memberType == MemberTypePrimary {
+			if memberType == memberTypePrimary {
 				if fieldKind != reflect.String {
 					return fmt.Errorf("ID must be a string")
 				}
@@ -78,10 +82,10 @@ func unmarshalCompoundDocument(v interface{}, cd *CompoundDocument) error {
 }
 
 func unmarshalDocument(v interface{}, d *Document) error {
-	return iterateStruct(v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
+	return iterateStruct(v, func(value reflect.Value, memberType memberType, memberNames ...string) error {
 		fieldKind := value.Kind()
 		// TODO this sets ID for all nexted primary tag fields
-		if memberType == MemberTypePrimary {
+		if memberType == memberTypePrimary {
 			if fieldKind != reflect.String {
 				return fmt.Errorf("ID must be a string")
 			}
@@ -94,13 +98,13 @@ func unmarshalDocument(v interface{}, d *Document) error {
 	})
 }
 
-func unmarshal(resource *Resource, memberType MemberType, memberNames []string, field reflect.Value) error {
+func unmarshal(resource *Resource, memberType memberType, memberNames []string, field reflect.Value) error {
 	// find raw value if exists
 	var search map[string]interface{}
 	switch memberType {
-	case MemberTypeAttribute:
+	case memberTypeAttribute:
 		search = resource.Attributes
-	case MemberTypeMeta:
+	case memberTypeMeta:
 		search = resource.Meta
 	}
 	rawValue, found := deepSearch(search, memberNames...)

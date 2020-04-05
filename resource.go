@@ -5,6 +5,8 @@ import (
 	"reflect"
 )
 
+// Resource is a JSON:API resource object.
+// See https://jsonapi.org/format/#document-resource-objects.
 type Resource struct {
 	// Exception: The id member is not required when the resource object originates at the client and represents a new resource to be created on the server.
 	ID   string `json:"id,omitempty"`
@@ -16,6 +18,7 @@ type Resource struct {
 	Meta          Meta          `json:"meta,omitempty"`
 }
 
+// NewResource generates a new JSON:API resource object.
 func NewResource() *Resource {
 	return &Resource{
 		Attributes: Attributes{},
@@ -24,6 +27,7 @@ func NewResource() *Resource {
 	}
 }
 
+// SetIDAndType sets the id and type of a JSON:API resource object.
 // TODO warn or error out when ID isn't plural?
 func (r *Resource) SetIDAndType(idValue reflect.Value, resourceType string) error {
 	kind := idValue.Kind()
@@ -42,6 +46,7 @@ func (r *Resource) SetIDAndType(idValue reflect.Value, resourceType string) erro
 	return nil
 }
 
+// SetLinks sets the links of a JSON:API resource object.
 func (r *Resource) SetLinks(linksValue reflect.Value) error {
 	links, ok := linksValue.Interface().(Links)
 	if !ok {

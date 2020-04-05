@@ -6,11 +6,13 @@ import (
 	"reflect"
 )
 
+// MarshalParams are the optional parameters to add links and meta objects to a top-level document.
 type MarshalParams struct {
 	Links *Links
 	Meta  *Meta
 }
 
+// Marshal returns the JSON:API encoding of v.
 func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 	rType := reflect.TypeOf(v)
 
@@ -26,8 +28,8 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 		isSlice = true
 	}
 
+	// handle compound document
 	if isSlice {
-		// handle optional params
 		ncdp := &NewCompoundDocumentParams{}
 		if p != nil {
 			ncdp.Links = p.Links
@@ -35,18 +37,19 @@ func Marshal(v interface{}, p *MarshalParams) ([]byte, error) {
 		}
 		document := NewCompoundDocument(ncdp)
 		return marshalCompoundDocument(v, document)
-	} else {
-		// handle optional params
-		ndp := &NewDocumentParams{}
-		if p != nil {
-			ndp.Links = p.Links
-			ndp.Meta = p.Meta
-		}
-		document := NewDocument(ndp)
-		return marshalDocument(v, document)
 	}
+
+	// handle single document
+	ndp := &NewDocumentParams{}
+	if p != nil {
+		ndp.Links = p.Links
+		ndp.Meta = p.Meta
+	}
+	document := NewDocument(ndp)
+	return marshalDocument(v, document)
 }
 
+// RegisterMarshaler register a custom marshaller function for a t type.
 func RegisterMarshaler(t reflect.Type, u marshalerFunc) {
 	customMarshalers[t] = u
 }
@@ -57,13 +60,13 @@ var customMarshalers = make(map[reflect.Type]marshalerFunc)
 
 func marshalDocument(v interface{}, d *Document) ([]byte, error) {
 	d.Data = NewResource()
-	if err := iterateStruct(v, func(value reflect.Value, memberType MemberType, memberNames ...string) error {
+	if err := iterateStruct(v, func(value reflect.Value, memberType memberType, memberNames ...string) error {
 		switch memberType {
-		case MemberTypePrimary:
+		case memberTypePrimary:
 			return d.Data.SetIDAndType(value, memberNames[0])
-		case MemberTypeLinks:
+		case memberTypeLinks:
 			return d.Data.SetLinks(value)
-		case MemberTypeRelationship:
+		case memberTypeRelationship:
 			if d.Data.Relationships == nil {
 				d.Data.Relationships = Relationships{}
 			}
@@ -99,13 +102,13 @@ func marshalCompoundDocument(v interface{}, cd *CompoundDocument) ([]byte, error
 			return nil, fmt.Errorf("document must be pointer or slice of pointers")
 		}
 		r := NewResource()
-		if err := iterateStruct(value.Interface(), func(value reflect.Value, memberType MemberType, memberNames ...string) error {
+		if err := iterateStruct(value.Interface(), func(value reflect.Value, memberType memberType, memberNames ...string) error {
 			switch memberType {
-			case MemberTypePrimary:
+			case memberTypePrimary:
 				return r.SetIDAndType(value, memberNames[0])
-			case MemberTypeLinks:
+			case memberTypeLinks:
 				return r.SetLinks(value)
-			case MemberTypeRelationship:
+			case memberTypeRelationship:
 				if r.Relationships == nil {
 					r.Relationships = Relationships{}
 				}
@@ -142,14 +145,14 @@ func marshalRelationship(value reflect.Value, d *document, r *Resource, memberNa
 	}
 	newIncl := NewResource()
 	rel.AddResource(NewResource())
-	if err := iterateStruct(value.Interface(), func(v2 reflect.Value, memberType MemberType, memberNames ...string) error {
+	if err := iterateStruct(value.Interface(), func(v2 reflect.Value, memberType memberType, memberNames ...string) error {
 		switch memberType {
-		case MemberTypePrimary:
+		case memberTypePrimary:
 			if err := rel.Data.SetIDAndType(v2, memberNames[0]); err != nil {
 				return err
 			}
 			return newIncl.SetIDAndType(v2, memberNames[0])
-		case MemberTypeLinks:
+		case memberTypeLinks:
 			return newIncl.SetLinks(v2)
 		default:
 			return marshal(newIncl, memberType, memberNames, v2)
@@ -178,14 +181,14 @@ func marshalCompoundRelationship(value reflect.Value, d *document, r *Resource, 
 		newIncl := NewResource()
 		newRel := NewRelationship()
 		newRel.AddResource(NewResource())
-		if err := iterateStruct(sValue.Interface(), func(v2 reflect.Value, memberType MemberType, memberNames ...string) error {
+		if err := iterateStruct(sValue.Interface(), func(v2 reflect.Value, memberType memberType, memberNames ...string) error {
 			switch memberType {
-			case MemberTypePrimary:
+			case memberTypePrimary:
 				if err := newRel.Data.SetIDAndType(v2, memberNames[0]); err != nil {
 					return err
 				}
 				return newIncl.SetIDAndType(v2, memberNames[0])
-			case MemberTypeLinks:
+			case memberTypeLinks:
 				return newIncl.SetLinks(v2)
 			default:
 				return marshal(newIncl, memberType, memberNames, v2)
@@ -208,13 +211,13 @@ func marshalCompoundRelationship(value reflect.Value, d *document, r *Resource, 
 	return nil
 }
 
-func marshal(resource *Resource, memberType MemberType, memberNames []string, value reflect.Value) error {
+func marshal(resource *Resource, memberType memberType, memberNames []string, value reflect.Value) error {
 	// figure out search
 	var search map[string]interface{}
 	switch memberType {
-	case MemberTypeAttribute:
+	case memberTypeAttribute:
 		search = resource.Attributes
-	case MemberTypeMeta:
+	case memberTypeMeta:
 		search = resource.Meta
 	}
 
