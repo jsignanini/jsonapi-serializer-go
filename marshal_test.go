@@ -392,13 +392,17 @@ func TestMarshalCustomTypeStringPtr(t *testing.T) {
 
 func TestMarshalCompound(t *testing.T) {
 	type TestCompound struct {
-		ID  string `jsonapi:"primary,test_compounds"`
-		Foo string `jsonapi:"attribute,bar"`
+		ID    string `jsonapi:"primary,test_compounds"`
+		Foo   string `jsonapi:"attribute,bar"`
+		Links Links  `jsonapi:"links,self"`
 	}
 	tcs := []*TestCompound{
 		{
 			ID:  "someID1",
 			Foo: "hello",
+			Links: Links{
+				"self": "/self/link",
+			},
 		},
 		{
 			ID:  "someID2",
@@ -412,6 +416,9 @@ func TestMarshalCompound(t *testing.T) {
 			"type": "test_compounds",
 			"attributes": {
 				"bar": "hello"
+			},
+			"links": {
+				"self": "/self/link"
 			}
 		},
 		{
