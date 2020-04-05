@@ -7,16 +7,16 @@ import (
 )
 
 func TestNewMemberType(t *testing.T) {
-	valids := map[string]MemberType{
-		"attribute":    MemberTypeAttribute,
-		"links":        MemberTypeLinks,
-		"primary":      MemberTypePrimary,
-		"meta":         MemberTypeMeta,
-		"relationship": MemberTypeRelationship,
+	valids := map[string]memberType{
+		"attribute":    memberTypeAttribute,
+		"links":        memberTypeLinks,
+		"primary":      memberTypePrimary,
+		"meta":         memberTypeMeta,
+		"relationship": memberTypeRelationship,
 	}
 	invalids := []string{"attributes", "link", "foo", ""}
 	for s, v := range valids {
-		m, err := NewMemberType(s)
+		m, err := newMemberType(s)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -25,8 +25,8 @@ func TestNewMemberType(t *testing.T) {
 		}
 	}
 	for _, s := range invalids {
-		if _, err := NewMemberType(s); err == nil {
-			t.Errorf("expected string: %s, to error out with message: %s", s, fmt.Errorf("MemberType '%s' not found.", s))
+		if _, err := newMemberType(s); err == nil {
+			t.Errorf("expected string: %s, to error out with message: %s", s, fmt.Errorf("member type '%s' not found", s))
 		}
 	}
 }

@@ -2,6 +2,8 @@ package jsonapi
 
 import "fmt"
 
+// Error is a JSON:API error object.
+// See https://jsonapi.org/format/#error-objects.
 type Error struct {
 	ID     string            `json:"id,omitempty"`
 	Links  Links             `json:"links,omitempty"`

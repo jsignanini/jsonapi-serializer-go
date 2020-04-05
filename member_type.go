@@ -6,34 +6,35 @@ import (
 	"strings"
 )
 
-type MemberType string
+// memberType is a JSONP:API member type.
+type memberType string
 
 const (
-	MemberTypeAttribute    MemberType = "attribute"
-	MemberTypeLinks        MemberType = "links"
-	MemberTypeMeta         MemberType = "meta"
-	MemberTypePrimary      MemberType = "primary"
-	MemberTypeRelationship MemberType = "relationship"
+	memberTypeAttribute    memberType = "attribute"
+	memberTypeLinks        memberType = "links"
+	memberTypeMeta         memberType = "meta"
+	memberTypePrimary      memberType = "primary"
+	memberTypeRelationship memberType = "relationship"
 )
 
-func NewMemberType(s string) (MemberType, error) {
+func newMemberType(s string) (memberType, error) {
 	switch s {
 	case "attribute":
-		return MemberTypeAttribute, nil
+		return memberTypeAttribute, nil
 	case "links":
-		return MemberTypeLinks, nil
+		return memberTypeLinks, nil
 	case "meta":
-		return MemberTypeMeta, nil
+		return memberTypeMeta, nil
 	case "primary":
-		return MemberTypePrimary, nil
+		return memberTypePrimary, nil
 	case "relationship":
-		return MemberTypeRelationship, nil
+		return memberTypeRelationship, nil
 	default:
-		return "", fmt.Errorf("MemberType '%s' not found.", s)
+		return "", fmt.Errorf("member type '%s' not found", s)
 	}
 }
 
-func getMember(field reflect.StructField) (MemberType, string, error) {
+func getMember(field reflect.StructField) (memberType, string, error) {
 	tag, ok := field.Tag.Lookup(tagKey)
 	if !ok {
 		return "", "", fmt.Errorf("tag: %s, not specified", tagKey)
@@ -45,7 +46,7 @@ func getMember(field reflect.StructField) (MemberType, string, error) {
 	if len(tagParts) != 2 {
 		return "", "", fmt.Errorf("tag: %s, was not formatted properly", tagKey)
 	}
-	memberType, err := NewMemberType(tagParts[0])
+	memberType, err := newMemberType(tagParts[0])
 	if err != nil {
 		return "", "", err
 	}

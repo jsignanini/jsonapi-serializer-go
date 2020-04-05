@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-type iterFunc func(reflect.Value, MemberType, ...string) error
+type iterFunc func(reflect.Value, memberType, ...string) error
 
 func iterateStruct(v interface{}, iter iterFunc, memberNames ...string) error {
 	rType := reflect.TypeOf(v)
