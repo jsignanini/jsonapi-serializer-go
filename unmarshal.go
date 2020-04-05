@@ -123,7 +123,7 @@ func unmarshal(resource *Resource, memberType MemberType, memberNames []string, 
 	// set values by kind
 	switch field.Kind() {
 	case reflect.Bool:
-		field.SetBool(value.Bool())
+		return setBool(field, value)
 	case reflect.String:
 		field.SetString(value.String())
 	case reflect.Int:
@@ -195,6 +195,14 @@ func setFloat(field, value reflect.Value) error {
 		return fmt.Errorf("number has no digits")
 	}
 	field.SetFloat(value.Float())
+	return nil
+}
+
+func setBool(field, value reflect.Value) error {
+	if _, ok := value.Interface().(bool); !ok {
+		return fmt.Errorf("invalid value for field %s", field.Type().Name())
+	}
+	field.SetBool(value.Bool())
 	return nil
 }
 

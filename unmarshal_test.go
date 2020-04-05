@@ -92,6 +92,26 @@ func TestUnmarshalBool(t *testing.T) {
 	if !expectedFalse.IsTrue {
 		t.Errorf("IsTrue was incorrect, got: %t, want: %t.", expectedFalse.IsTrue, false)
 	}
+
+	// test incorrectly sending a string instead of an int
+	wrongTypeOut := TestBool{}
+	wrongTypeErr := "invalid value for field bool"
+	wrongType := []byte(`{
+		"data": {
+			"id": "sample-1",
+			"type": "floats",
+			"attributes": {
+				"is_true": "wrong string"
+			}
+		}
+	}`)
+	if err := Unmarshal(wrongType, &wrongTypeOut); err == nil {
+		t.Errorf("expected error: %s, got no error", wrongTypeErr)
+	} else {
+		if err.Error() != wrongTypeErr {
+			t.Errorf("expected error: %s, got: %s", wrongTypeErr, err.Error())
+		}
+	}
 }
 
 func TestUnmarshalBoolPtr(t *testing.T) {
@@ -386,7 +406,7 @@ func TestUnmarshalFloats(t *testing.T) {
 		t.Errorf("expected float64 to be: %f, got: %f", math.MaxFloat64, maxOut.Float64)
 	}
 
-	// test incorrectly sending a string instead of an int
+	// test incorrectly sending a string instead of a float
 	wrongTypeOut := Sample{}
 	wrongTypeErr := "number has no digits"
 	wrongType := []byte(`{
