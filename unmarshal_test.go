@@ -789,4 +789,84 @@ func TestUnmarshalErrors(t *testing.T) {
 	case malformedCompoundJSONErr == nil:
 		t.Error("expected malformed JSON to error out but got no error")
 	}
+
+	// document resource id is not a string
+	type NonStringID struct {
+		ID  int    `jsonapi:"primary,non_string_ids"`
+		Foo string `jsonapi:"attribute,foo"`
+	}
+	documentNonStringID := NonStringID{}
+	documentNonStringIDIn := []byte(`{
+	"data": {
+		"id": "non-string-id-1",
+		"type": "non_string_ids",
+		"attributes": {
+			"foo": "bar1"
+		}
+	}
+}`)
+	documentNonStringIDErrMsg := "ID must be a string"
+	documentNonStringIDErr := Unmarshal(documentNonStringIDIn, &documentNonStringID)
+	switch {
+	case documentNonStringIDErr == nil:
+		t.Error("expected compound document resource with non-string id to error out but got no error")
+	case documentNonStringIDErr.Error() != documentNonStringIDErrMsg:
+		t.Errorf("expected compound document resource with non-string id to error: %s, got: %s",
+			documentNonStringIDErrMsg,
+			documentNonStringIDErr.Error(),
+		)
+	}
+
+	// compound document resource id is not a string
+	compoundDocumentNonStringID := []NonStringID{}
+	compoundDocumentNonStringIDIn := []byte(`{
+	"data": [
+		{
+			"id": "non-string-id-1",
+			"type": "non_string_ids",
+			"attributes": {
+				"foo": "bar1"
+			}
+		},
+		{
+			"id": "non-string-id-2",
+			"type": "non_string_ids",
+			"attributes": {
+				"foo": "bar2"
+			}
+		}
+	]
+}`)
+	compoundDocumentNonStringIDErrMsg := "ID must be a string"
+	compoundDocumentNonStringIDErr := Unmarshal(compoundDocumentNonStringIDIn, &compoundDocumentNonStringID)
+	switch {
+	case compoundDocumentNonStringIDErr == nil:
+		t.Error("expected compound document resource with non-string id to error out but got no error")
+	case compoundDocumentNonStringIDErr.Error() != compoundDocumentNonStringIDErrMsg:
+		t.Errorf("expected compound document resource with non-string id to error: %s, got: %s",
+			compoundDocumentNonStringIDErrMsg,
+			compoundDocumentNonStringIDErr.Error(),
+		)
+	}
+
+	// TODO make this error out
+	// unsupported builtin type
+	type UnsupportedBuiltin struct {
+		ID         string     `jsonapi:"primary,unsupported_builtins"`
+		Complex128 complex128 `jsonapi:"attribute,complex128"`
+	}
+	unsupportedBuiltin := UnsupportedBuiltin{}
+	unsupportedBuiltinIn := []byte(`{
+	"data": {
+		"id": "unsupported-builtin-1",
+		"type": "unsupported_builtins",
+		"attributes": {
+			"complex128": "3+4i"
+		}
+	}
+}`)
+	// unsupportedBuiltinErrMsg := "unsupported builtin type"
+	if unsupportedBuiltinErr := Unmarshal(unsupportedBuiltinIn, &unsupportedBuiltin); unsupportedBuiltinErr != nil {
+		t.Errorf("unsupported builtin type expected no error, got: %s", unsupportedBuiltinErr.Error())
+	}
 }
