@@ -354,6 +354,59 @@ func TestUnmarshalUints(t *testing.T) {
 	}
 }
 
+func TestUnmarshalFloats(t *testing.T) {
+	type Sample struct {
+		ID      string  `jsonapi:"primary,uints"`
+		Float32 float32 `jsonapi:"attribute,float32"`
+		Float64 float64 `jsonapi:"attribute,float64"`
+	}
+
+	// test maximums
+	maxOut := Sample{}
+	max := []byte(fmt.Sprintf(`{
+	"data": {
+		"id": "sample-1",
+		"type": "floats",
+		"attributes": {
+			"float32": %f,
+			"float64": %f
+		}
+	}
+}`, math.MaxFloat32, math.MaxFloat64))
+	if err := Unmarshal(max, &maxOut); err != nil {
+		t.Errorf(err.Error())
+	}
+	if maxOut.ID != "sample-1" {
+		t.Errorf("expected id to be: %s, got: %s", "sample-1", maxOut.ID)
+	}
+	if maxOut.Float32 != math.MaxFloat32 {
+		t.Errorf("expected float32 to be: %f, got: %f", math.MaxFloat32, maxOut.Float32)
+	}
+	if maxOut.Float64 != math.MaxFloat64 {
+		t.Errorf("expected float64 to be: %f, got: %f", math.MaxFloat64, maxOut.Float64)
+	}
+
+	// test incorrectly sending a string instead of an int
+	wrongTypeOut := Sample{}
+	wrongTypeErr := "number has no digits"
+	wrongType := []byte(`{
+	"data": {
+		"id": "sample-1",
+		"type": "floats",
+		"attributes": {
+			"float32": "wrong string"
+		}
+	}
+}`)
+	if err := Unmarshal(wrongType, &wrongTypeOut); err == nil {
+		t.Errorf("expected error: %s, got no error", wrongTypeErr)
+	} else {
+		if err.Error() != wrongTypeErr {
+			t.Errorf("expected error: %s, got: %s", wrongTypeErr, err.Error())
+		}
+	}
+}
+
 func TestUnmarshalNestedStruct(t *testing.T) {
 	s := Sample{}
 	input := []byte(`{
