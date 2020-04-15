@@ -110,6 +110,5 @@ Outputs:
 - Optionally set jsonapi settings (e.g.: spec version, error/warning on document validation, etc.)
 - Support omitempty tag `jsonapi:"attribute,name,omitempty"`
 - Standardize internal errors
-- Support non-string resource IDs
 - Show error or warning when parsing an unsupported builtin type (e.g.: `complex128`)
 - Handle top-level Links and resource-level links separatedly
