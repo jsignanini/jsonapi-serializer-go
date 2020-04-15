@@ -2123,7 +2123,7 @@ func TestMarshalErrors2(t *testing.T) {
 		ID:  true,
 		Foo: "bar",
 	}
-	wrongIDTypeErrMsg := "ID must be a string, got bool"
+	wrongIDTypeErrMsg := "ID must be a string or int, got bool"
 	_, wrongIDTypeErr := Marshal(wrongIDType, nil)
 	switch {
 	case wrongIDTypeErr == nil:
@@ -2146,7 +2146,7 @@ func TestMarshalErrors2(t *testing.T) {
 			Foo: "bar",
 		},
 	}
-	wrongIDTypeInRelErrMsg := "ID must be a string, got bool"
+	wrongIDTypeInRelErrMsg := "ID must be a string or int, got bool"
 	_, wrongIDTypeInRelErr := Marshal(wrongIDTypeInRel, nil)
 	switch {
 	case wrongIDTypeInRelErr == nil:
@@ -2172,7 +2172,7 @@ func TestMarshalErrors2(t *testing.T) {
 			},
 		},
 	}
-	wrongIDTypeInRelsErrMsg := "ID must be a string, got bool"
+	wrongIDTypeInRelsErrMsg := "ID must be a string or int, got bool"
 	_, wrongIDTypeInRelsErr := Marshal(wrongIDTypeInRels, nil)
 	switch {
 	case wrongIDTypeInRelsErr == nil:
@@ -2200,7 +2200,7 @@ func TestMarshalErrors2(t *testing.T) {
 			},
 		},
 	}
-	wrongIDTypesInRelsErrMsg := "ID must be a string, got bool"
+	wrongIDTypesInRelsErrMsg := "ID must be a string or int, got bool"
 	_, wrongIDTypesInRelsErr := Marshal(wrongIDTypesInRels, nil)
 	switch {
 	case wrongIDTypesInRelsErr == nil:
@@ -2232,7 +2232,7 @@ func TestMarshalErrors2(t *testing.T) {
 			},
 		},
 	}
-	wrongIDTypeInCompRelsInCompDocErrMsg := "ID must be a string, got bool"
+	wrongIDTypeInCompRelsInCompDocErrMsg := "ID must be a string or int, got bool"
 	_, wrongIDTypeInCompRelsInCompDocErr := Marshal(wrongIDTypeInCompRelsInCompDoc, nil)
 	switch {
 	case wrongIDTypeInCompRelsInCompDocErr == nil:

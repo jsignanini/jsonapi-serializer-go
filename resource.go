@@ -31,10 +31,15 @@ func NewResource() *Resource {
 // TODO warn or error out when ID isn't plural?
 func (r *Resource) SetIDAndType(idValue reflect.Value, resourceType string) error {
 	kind := idValue.Kind()
-	if kind != reflect.String {
-		return fmt.Errorf("ID must be a string, got %s", kind)
+	id := ""
+	switch kind {
+	case reflect.String:
+		id, _ = idValue.Interface().(string)
+	case reflect.Int:
+		id = fmt.Sprintf("%d", idValue.Interface())
+	default:
+		return fmt.Errorf("ID must be a string or int, got %s", kind)
 	}
-	id, _ := idValue.Interface().(string)
 	if id == "" {
 		return fmt.Errorf("ID must be set")
 	}
