@@ -2280,12 +2280,11 @@ func TestMarshalErrors2(t *testing.T) {
 		},
 	}
 	nonPointerCompoundRelsErrMsg := "relationship must be pointer or slice of pointers"
-	a, nonPointerCompoundRelsErr := Marshal(&nonPointerCompoundRels, nil)
+	_, nonPointerCompoundRelsErr := Marshal(&nonPointerCompoundRels, nil)
 	switch {
 	case nonPointerCompoundRelsErr == nil:
 		t.Errorf("expected error: %s, but got no error", nonPointerCompoundRelsErr)
 	case nonPointerCompoundRelsErr.Error() != nonPointerCompoundRelsErrMsg:
 		t.Errorf("expected error: %s, got: %s", nonPointerCompoundRelsErrMsg, nonPointerCompoundRelsErr.Error())
 	}
-	fmt.Println("here", string(a))
 }
