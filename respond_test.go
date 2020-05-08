@@ -143,13 +143,17 @@ func TestRespondError(t *testing.T) {
 	"errors": [
 		{
 			"title": "internal_server_error"
+		},
+		{
+			"id": "BAD_REQUEST",
+			"title": "bad_request"
 		}
 	]
 }`),
 			ExpectedContentType: ContentType,
 			ExpectedStatusCode:  http.StatusInternalServerError,
 			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if err := RespondError(w, r, http.StatusInternalServerError, nil, Error{Title: "internal_server_error"}); err != nil {
+				if err := RespondError(w, r, http.StatusInternalServerError, nil, Error{Title: "internal_server_error"}, Error{ID: "BAD_REQUEST", Title: "bad_request"}); err != nil {
 					t.Errorf("expected no error, got: %s", err.Error())
 				}
 			}),
