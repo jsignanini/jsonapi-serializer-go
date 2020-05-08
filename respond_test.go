@@ -51,8 +51,7 @@ func TestRespond(t *testing.T) {
 			}),
 		},
 		{
-			ExpectedContentType: ContentType,
-			ExpectedStatusCode:  http.StatusOK,
+			ExpectedStatusCode: http.StatusOK,
 			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				car := Car{
 					Make:  "Honda",
