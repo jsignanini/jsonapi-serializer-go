@@ -24,10 +24,8 @@ func RespondError(w http.ResponseWriter, r *http.Request, statusCode int, p *Mar
 	return respond(w, r, statusCode, body)
 }
 
-func respond(w http.ResponseWriter, r *http.Request, statusCode int, body []byte) error {
+func respond(w http.ResponseWriter, r *http.Request, statusCode int, body []byte) (err error) {
 	w.WriteHeader(statusCode)
-	if _, err := w.Write(body); err != nil {
-		return err
-	}
-	return nil
+	_, err = w.Write(body)
+	return err
 }
