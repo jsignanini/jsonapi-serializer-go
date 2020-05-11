@@ -6,8 +6,8 @@ import (
 
 // Respond encodes v in to a JSON:API object and writes it to the body of response w. It also sets
 // statusCode as the response status code.
-func Respond(w http.ResponseWriter, r *http.Request, statusCode int, v interface{}) error {
-	body, err := Marshal(v, nil)
+func Respond(w http.ResponseWriter, r *http.Request, statusCode int, v interface{}, p *MarshalParams) error {
+	body, err := Marshal(v, p)
 	if err != nil {
 		return err
 	}

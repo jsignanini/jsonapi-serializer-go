@@ -45,7 +45,7 @@ func TestRespond(t *testing.T) {
 					Make:  "Honda",
 					Model: "CR-V",
 				}
-				if err := Respond(w, r, http.StatusOK, &car); err != nil {
+				if err := Respond(w, r, http.StatusOK, &car, nil); err != nil {
 					t.Errorf("expected no error, got: %s", err.Error())
 				}
 			}),
@@ -57,7 +57,7 @@ func TestRespond(t *testing.T) {
 					Make:  "Honda",
 					Model: "CR-V",
 				}
-				if err := Respond(w, r, http.StatusOK, &car); err != nil {
+				if err := Respond(w, r, http.StatusOK, &car, nil); err != nil {
 					if err.Error() != "ID must be set" {
 						t.Errorf("expected error: %s, got: %s", "ID must be set", err.Error())
 					}
