@@ -790,7 +790,72 @@ func TestUnmarshalErrors(t *testing.T) {
 		t.Error("expected malformed JSON to error out but got no error")
 	}
 
-	// document resource id is not a string
+	// int ID
+	type IntID struct {
+		ID  int    `jsonapi:"primary,int_ids"`
+		Foo string `jsonapi:"attribute,foo"`
+	}
+	intID := IntID{}
+	intIDIn := []byte(`{
+	"data": {
+		"id": "576",
+		"type": "int_ids",
+		"attributes": {
+			"foo": "bar"
+		}
+	}
+}`)
+	if err := Unmarshal(intIDIn, &intID); err != nil {
+		t.Errorf("expected no error, got: %s", err.Error())
+	}
+	if intID.ID != 576 {
+		t.Errorf("expected int id to be: %d, got: %d", 576, intID.ID)
+	}
+	if intID.Foo != "bar" {
+		t.Errorf("expected int id attribute to be: %s, got: %s", "bar", intID.Foo)
+	}
+
+	// int ID compound
+	intIDs := []IntID{}
+	intIDIns := []byte(`{
+	"data": [
+		{
+			"id": "576",
+			"type": "int_ids",
+			"attributes": {
+				"foo": "bar1"
+			}
+		},
+		{
+			"id": "85",
+			"type": "int_ids",
+			"attributes": {
+				"foo": "bar2"
+			}
+		}
+	]
+}`)
+	if err := Unmarshal(intIDIns, &intIDs); err != nil {
+		t.Errorf("expected no error, got: %s", err.Error())
+	}
+	if len(intIDs) != 2 {
+		t.Errorf("expected intIDs of length: %d, got: %d", 2, len(intIDs))
+		return
+	}
+	if intIDs[0].ID != 576 {
+		t.Errorf("expected int ids [0] to be: %d, got: %d", 576, intIDs[0].ID)
+	}
+	if intIDs[0].Foo != "bar1" {
+		t.Errorf("expected int ids [0] foo attribute to be: %s, got: %s", "bar1", intIDs[0].Foo)
+	}
+	if intIDs[1].ID != 85 {
+		t.Errorf("expected int ids [1] to be: %d, got: %d", 85, intIDs[1].ID)
+	}
+	if intIDs[1].Foo != "bar2" {
+		t.Errorf("expected int ids [1] foo attribute to be: %s, got: %s", "bar2", intIDs[1].Foo)
+	}
+
+	// setting ID string as int error
 	type NonStringID struct {
 		ID  int    `jsonapi:"primary,non_string_ids"`
 		Foo string `jsonapi:"attribute,foo"`
@@ -805,7 +870,7 @@ func TestUnmarshalErrors(t *testing.T) {
 		}
 	}
 }`)
-	documentNonStringIDErrMsg := "ID must be a string"
+	documentNonStringIDErrMsg := `strconv.Atoi: parsing "non-string-id-1": invalid syntax`
 	documentNonStringIDErr := Unmarshal(documentNonStringIDIn, &documentNonStringID)
 	switch {
 	case documentNonStringIDErr == nil:
@@ -837,7 +902,7 @@ func TestUnmarshalErrors(t *testing.T) {
 		}
 	]
 }`)
-	compoundDocumentNonStringIDErrMsg := "ID must be a string"
+	compoundDocumentNonStringIDErrMsg := `strconv.Atoi: parsing "non-string-id-1": invalid syntax`
 	compoundDocumentNonStringIDErr := Unmarshal(compoundDocumentNonStringIDIn, &compoundDocumentNonStringID)
 	switch {
 	case compoundDocumentNonStringIDErr == nil:
@@ -847,6 +912,45 @@ func TestUnmarshalErrors(t *testing.T) {
 			compoundDocumentNonStringIDErrMsg,
 			compoundDocumentNonStringIDErr.Error(),
 		)
+	}
+
+	// id is not string nor int
+	type WrongTypeID struct {
+		ID []byte `jsonapi:"primary,wrong_type_ids"`
+	}
+	wrongTypeID := WrongTypeID{}
+	wrongTypeIDError := "ID must be a string or int"
+	wrongTypeIDIn := []byte(`{
+	"data": {
+		"id": "something"
+	}
+}`)
+	if err := Unmarshal(wrongTypeIDIn, &wrongTypeID); err != nil {
+		if err.Error() != wrongTypeIDError {
+			t.Errorf("expected error: %s, got: %s", wrongTypeIDError, err.Error())
+		}
+	} else {
+		t.Errorf("expected error: %s, got no error", wrongTypeIDError)
+	}
+
+	// id is not string nor int compound
+	wrongTypeIDs := []WrongTypeID{}
+	wrongTypeIDIns := []byte(`{
+		"data": [
+			{
+				"id": "something-1"
+			},
+			{
+				"id": "something-2"
+			}
+		]
+}`)
+	if err := Unmarshal(wrongTypeIDIns, &wrongTypeIDs); err != nil {
+		if err.Error() != wrongTypeIDError {
+			t.Errorf("expected error: %s, got: %s", wrongTypeIDError, err.Error())
+		}
+	} else {
+		t.Errorf("expected error: %s, got no error", wrongTypeIDError)
 	}
 
 	// TODO make this error out
