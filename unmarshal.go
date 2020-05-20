@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -64,10 +65,18 @@ func unmarshalCompoundDocument(v interface{}, cd *CompoundDocument) error {
 			fieldKind := value.Kind()
 			// TODO this sets ID for all nexted primary tag fields
 			if memberType == memberTypePrimary {
-				if fieldKind != reflect.String {
-					return fmt.Errorf("ID must be a string")
+				switch fieldKind {
+				case reflect.String:
+					value.SetString(resource.ID)
+				case reflect.Int:
+					intID, err := strconv.Atoi(resource.ID)
+					if err != nil {
+						return err
+					}
+					value.SetInt(int64(intID))
+				default:
+					return fmt.Errorf("ID must be a string or int")
 				}
-				value.SetString(resource.ID)
 				return nil
 			}
 			// set raw value
@@ -86,10 +95,18 @@ func unmarshalDocument(v interface{}, d *Document) error {
 		fieldKind := value.Kind()
 		// TODO this sets ID for all nexted primary tag fields
 		if memberType == memberTypePrimary {
-			if fieldKind != reflect.String {
-				return fmt.Errorf("ID must be a string")
+			switch fieldKind {
+			case reflect.String:
+				value.SetString(d.Data.ID)
+			case reflect.Int:
+				intID, err := strconv.Atoi(d.Data.ID)
+				if err != nil {
+					return err
+				}
+				value.SetInt(int64(intID))
+			default:
+				return fmt.Errorf("ID must be a string or int")
 			}
-			value.SetString(d.Data.ID)
 			return nil
 		}
 
