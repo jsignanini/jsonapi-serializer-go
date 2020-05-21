@@ -16,6 +16,10 @@ type Sample struct {
 	Int     int     `jsonapi:"attribute,int"`
 	String  string  `jsonapi:"attribute,string"`
 
+	// slices
+	SliceInts    []int    `jsonapi:"attribute,slice_ints"`
+	SliceStrings []string `jsonapi:"attribute,slice_strings"`
+
 	// basic types on meta
 	MetaString  string  `jsonapi:"meta,string"`
 	MetaFloat64 float64 `jsonapi:"meta,float64"`
