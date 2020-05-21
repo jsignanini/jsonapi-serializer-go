@@ -9,9 +9,15 @@ import (
 
 func TestMarshal(t *testing.T) {
 	s := Sample{
-		ID:         "someID",
-		Int:        99,
-		Float64:    3.14159265359,
+		ID:      "someID",
+		Int:     99,
+		Float64: 3.14159265359,
+		SliceInts: []int{
+			0, 1, 1, 2, 3, 5,
+		},
+		SliceStrings: []string{
+			"hello", "world",
+		},
 		String:     "someString",
 		MetaString: "bar",
 	}
@@ -22,6 +28,18 @@ func TestMarshal(t *testing.T) {
 		"attributes": {
 			"float64": 3.14159265359,
 			"int": 99,
+			"slice_ints": [
+				0,
+				1,
+				1,
+				2,
+				3,
+				5
+			],
+			"slice_strings": [
+				"hello",
+				"world"
+			],
 			"string": "someString"
 		},
 		"meta": {
