@@ -173,6 +173,13 @@ func unmarshal(resource *Resource, memberType memberType, memberNames []string, 
 		fallthrough
 	case reflect.Float64:
 		return setFloat(field, value)
+	case reflect.Slice:
+		switch field.Type() {
+		case reflect.TypeOf([]string{}):
+			return setStringSlice(field, value)
+		case reflect.TypeOf([]int{}):
+			return setIntSlice(field, value)
+		}
 	}
 	return nil
 }
@@ -216,6 +223,36 @@ func setFloat(field, value reflect.Value) error {
 		return fmt.Errorf("number has no digits")
 	}
 	field.SetFloat(value.Float())
+	return nil
+}
+
+func setStringSlice(field, value reflect.Value) error {
+	arr := make([]string, value.Len(), value.Cap())
+
+	for i := 0; i < value.Len(); i++ {
+		strVal, ok := value.Index(i).Interface().(string)
+		if !ok {
+			return fmt.Errorf("error")
+		}
+		arr[i] = strVal
+	}
+
+	field.Set(reflect.ValueOf(arr))
+	return nil
+}
+
+func setIntSlice(field, value reflect.Value) error {
+	arr := make([]int, value.Len(), value.Cap())
+
+	for i := 0; i < value.Len(); i++ {
+		floatVal, ok := value.Index(i).Interface().(float64)
+		if !ok {
+			return fmt.Errorf("error")
+		}
+		arr[i] = int(floatVal)
+	}
+
+	field.Set(reflect.ValueOf(arr))
 	return nil
 }
 

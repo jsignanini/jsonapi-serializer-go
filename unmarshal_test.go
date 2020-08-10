@@ -500,6 +500,56 @@ func TestUnmarshalEmbeddedStruct(t *testing.T) {
 	}
 }
 
+func TestIntSlices(t *testing.T) {
+	input := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "samples",
+			"attributes": {
+				"slice_ints": [5, 10, 1]
+			}
+		}
+	}`)
+	s := Sample{}
+	expectedSlice := []int{5, 10, 1}
+	if err := Unmarshal(input, &s); err != nil {
+		t.Errorf(err.Error())
+	}
+	if len(s.SliceInts) != 3 {
+		t.Errorf("Length of slice incorrect, got %v, want: %v", len(s.SliceInts), 3)
+	}
+	for i, v := range s.SliceInts {
+		if v != expectedSlice[i] {
+			t.Errorf("Slice value incorrect at index %d, got %v, want %v", i, v, expectedSlice[i])
+		}
+	}
+}
+
+func TestStringSlices(t *testing.T) {
+	input := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "samples",
+			"attributes": {
+				"slice_strings": ["hello", "world", "!"]
+			}
+		}
+	}`)
+	s := Sample{}
+	expectedSlice := []string{"hello", "world", "!"}
+	if err := Unmarshal(input, &s); err != nil {
+		t.Errorf(err.Error())
+	}
+	if len(s.SliceStrings) != 3 {
+		t.Errorf("Length of slice incorrect, got %v, want: %v", len(s.SliceInts), 3)
+	}
+	for i, v := range s.SliceStrings {
+		if v != expectedSlice[i] {
+			t.Errorf("Slice value incorrect at index %d, got %v, want %v", i, v, expectedSlice[i])
+		}
+	}
+}
+
 func TestUnmarshalCustomType(t *testing.T) {
 	// TODO
 }
