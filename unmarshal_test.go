@@ -500,6 +500,96 @@ func TestUnmarshalEmbeddedStruct(t *testing.T) {
 	}
 }
 
+func TestIntSlices(t *testing.T) {
+	input := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "samples",
+			"attributes": {
+				"slice_ints": [5, 10, 1]
+			}
+		}
+	}`)
+	s := Sample{}
+	expectedSlice := []int{5, 10, 1}
+	if err := Unmarshal(input, &s); err != nil {
+		t.Errorf(err.Error())
+	}
+	if len(s.SliceInts) != 3 {
+		t.Errorf("Length of slice incorrect, got %v, want: %v", len(s.SliceInts), 3)
+	}
+	for i, v := range s.SliceInts {
+		if v != expectedSlice[i] {
+			t.Errorf("Slice value incorrect at index %d, got %v, want %v", i, v, expectedSlice[i])
+		}
+	}
+
+	wrongStruct := Sample{}
+	wrongError := "value is not of type float64"
+	wrongInput := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "samples",
+			"attributes": {
+				"slice_ints": ["hello"]
+			}
+		}
+	}`)
+
+	if err := Unmarshal(wrongInput, &wrongStruct); err == nil {
+		t.Errorf("expected error: %s, go no error", wrongError)
+	} else {
+		if err.Error() != wrongError {
+			t.Errorf("expected error: %s, got: %s", wrongError, err.Error())
+		}
+	}
+}
+
+func TestStringSlices(t *testing.T) {
+	input := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "samples",
+			"attributes": {
+				"slice_strings": ["hello", "world", "!"]
+			}
+		}
+	}`)
+	s := Sample{}
+	expectedSlice := []string{"hello", "world", "!"}
+	if err := Unmarshal(input, &s); err != nil {
+		t.Errorf(err.Error())
+	}
+	if len(s.SliceStrings) != 3 {
+		t.Errorf("Length of slice incorrect, got %v, want: %v", len(s.SliceInts), 3)
+	}
+	for i, v := range s.SliceStrings {
+		if v != expectedSlice[i] {
+			t.Errorf("Slice value incorrect at index %d, got %v, want %v", i, v, expectedSlice[i])
+		}
+	}
+
+	wrongStruct := Sample{}
+	wrongError := "value is not of type string"
+	wrongInput := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "samples",
+			"attributes": {
+				"slice_strings": [2]
+			}
+		}
+	}`)
+
+	if err := Unmarshal(wrongInput, &wrongStruct); err == nil {
+		t.Errorf("expected error: %s, go no error", wrongError)
+	} else {
+		if err.Error() != wrongError {
+			t.Errorf("expected error: %s, got: %s", wrongError, err.Error())
+		}
+	}
+}
+
 func TestUnmarshalCustomType(t *testing.T) {
 	// TODO
 }
