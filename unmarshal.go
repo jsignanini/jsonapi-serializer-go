@@ -232,7 +232,7 @@ func setStringSlice(field, value reflect.Value) error {
 	for i := 0; i < value.Len(); i++ {
 		strVal, ok := value.Index(i).Interface().(string)
 		if !ok {
-			return fmt.Errorf("error")
+			return fmt.Errorf("value is not of type string")
 		}
 		arr[i] = strVal
 	}
@@ -247,7 +247,7 @@ func setIntSlice(field, value reflect.Value) error {
 	for i := 0; i < value.Len(); i++ {
 		floatVal, ok := value.Index(i).Interface().(float64)
 		if !ok {
-			return fmt.Errorf("error")
+			return fmt.Errorf("value is not of type float64")
 		}
 		arr[i] = int(floatVal)
 	}

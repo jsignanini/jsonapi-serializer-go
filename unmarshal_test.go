@@ -523,6 +523,26 @@ func TestIntSlices(t *testing.T) {
 			t.Errorf("Slice value incorrect at index %d, got %v, want %v", i, v, expectedSlice[i])
 		}
 	}
+
+	wrongStruct := Sample{}
+	wrongError := "value is not of type float64"
+	wrongInput := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "samples",
+			"attributes": {
+				"slice_ints": ["hello"]
+			}
+		}
+	}`)
+
+	if err := Unmarshal(wrongInput, &wrongStruct); err == nil {
+		t.Errorf("expected error: %s, go no error", wrongError)
+	} else {
+		if err.Error() != wrongError {
+			t.Errorf("expected error: %s, got: %s", wrongError, err.Error())
+		}
+	}
 }
 
 func TestStringSlices(t *testing.T) {
@@ -546,6 +566,26 @@ func TestStringSlices(t *testing.T) {
 	for i, v := range s.SliceStrings {
 		if v != expectedSlice[i] {
 			t.Errorf("Slice value incorrect at index %d, got %v, want %v", i, v, expectedSlice[i])
+		}
+	}
+
+	wrongStruct := Sample{}
+	wrongError := "value is not of type string"
+	wrongInput := []byte(`{
+		"data": {
+			"id": "someID",
+			"type": "samples",
+			"attributes": {
+				"slice_strings": [2]
+			}
+		}
+	}`)
+
+	if err := Unmarshal(wrongInput, &wrongStruct); err == nil {
+		t.Errorf("expected error: %s, go no error", wrongError)
+	} else {
+		if err.Error() != wrongError {
+			t.Errorf("expected error: %s, got: %s", wrongError, err.Error())
 		}
 	}
 }
