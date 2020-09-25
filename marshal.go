@@ -219,6 +219,9 @@ func marshal(resource *Resource, memberType memberType, memberNames []string, va
 		search = resource.Attributes
 	case memberTypeMeta:
 		search = resource.Meta
+	case memberTypeRelationship:
+		// TODO we should not need to skip relationships, this function should not be called for relationships
+		return nil
 	}
 
 	// iterate memberNames
